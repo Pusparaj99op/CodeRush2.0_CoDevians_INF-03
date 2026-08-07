@@ -1,23 +1,6 @@
-import { CreditCard, GitBranch, UsersThree } from "@phosphor-icons/react/dist/ssr";
+import Link from "next/link";
+import { GAPS } from "@/lib/content";
 import { GsapReveal } from "./gsap-reveal";
-
-const GAPS = [
-  {
-    icon: CreditCard,
-    title: "No native pay-per-call HTTP payments",
-    body: "Algorand has no standard x402 facilitator. Veldar built one, so any Algorand contract can serve pay-per-call requests.",
-  },
-  {
-    icon: GitBranch,
-    title: "No orchestration layer for agents",
-    body: "Fast contracts alone don't make a workflow trustworthy. Veldar's orchestrator adds budgets, conditions, and approval gates on top.",
-  },
-  {
-    icon: UsersThree,
-    title: "No consumer-facing agent UX",
-    body: "algosdk and AlgoKit are built for developers. Veldar is the plain-language layer a non-technical user can actually trust.",
-  },
-];
 
 export function GapSection() {
   return (
@@ -27,20 +10,28 @@ export function GapSection() {
           <h2 className="max-w-xl font-[family-name:var(--font-display)] text-3xl font-medium leading-tight text-[var(--color-headline)] md:text-4xl">
             Built for what Algorand doesn&apos;t have yet.
           </h2>
-          <img
-            src="https://cdn.simpleicons.org/algorand/F5F3F0"
-            alt="Algorand"
-            className="h-8 w-auto shrink-0 opacity-90"
-          />
+          <div className="flex shrink-0 items-center gap-5">
+            <img
+              src="https://cdn.simpleicons.org/algorand/F5F3F0"
+              alt="Algorand"
+              className="h-8 w-auto opacity-90"
+            />
+            <Link
+              href="/algorand"
+              className="text-sm font-medium text-[var(--color-accent)] transition-colors hover:text-[var(--color-accent-hover)]"
+            >
+              Read the technical story
+            </Link>
+          </div>
         </GsapReveal>
 
         <div className="mt-10 grid grid-cols-1 gap-4 md:grid-cols-3">
-          {GAPS.map(({ icon: Icon, title, body }, i) => (
-            <GsapReveal key={title} delay={i * 0.1}>
+          {GAPS.map(({ id, icon: Icon, title, teaser }, i) => (
+            <GsapReveal key={id} delay={i * 0.1}>
               <div className="flex h-full flex-col gap-4 rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg-elevated)] p-7">
                 <Icon size={26} weight="duotone" className="text-[var(--color-cta)]" />
                 <h3 className="text-base font-semibold text-[var(--color-headline)]">{title}</h3>
-                <p className="text-sm leading-relaxed text-[var(--color-body)]">{body}</p>
+                <p className="text-sm leading-relaxed text-[var(--color-body)]">{teaser}</p>
               </div>
             </GsapReveal>
           ))}
