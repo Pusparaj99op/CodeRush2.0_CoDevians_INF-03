@@ -292,24 +292,35 @@ function WorkflowPanel() {
     return () => clearInterval(timer);
   }, [workflow, pendingApproval]);
 
-  async function approve(decision: "approved" | "denied", useLute = false) {
+  const [approvalError, setApprovalError] = useState<string | null>(null);
+
+  async function approve(decision: "approved" | "denied", useLute = false, forceServerFallback = false) {
     if (!workflow || !pendingApproval) return;
     setApproving(decision);
+    setApprovalError(null);
     try {
       const approvalId = pendingApproval.detail.approvalId as string;
       let luteTxnHash: string | undefined;
 
-      if (decision === "approved") {
+      if (decision === "approved" && !forceServerFallback) {
         const savedLuteAddr = typeof window !== "undefined" ? localStorage.getItem("veldar:lute_address") : null;
         if (useLute || savedLuteAddr) {
-          const luteAddr = savedLuteAddr ?? (await connectLuteWallet());
-          const amountAlgo = (pendingApproval.detail.amountAlgo as number) ?? 1.0;
-          const result = await signPaymentWithLute(
-            luteAddr,
-            "4SNSKGZL6TUKMZKJ3BELVCOXTZ653N2OVOKVWBLC26IGBNAAX35ZNW6HB4",
-            amountAlgo
-          );
-          luteTxnHash = result.txnHash;
+          try {
+            const luteAddr = savedLuteAddr ?? (await connectLuteWallet());
+            const amountAlgo = (pendingApproval.detail.amountAlgo as number) ?? 1.0;
+            const result = await signPaymentWithLute(
+              luteAddr,
+              "4SNSKGZL6TUKMZKJ3BELVCOXTZ653N2OVOKVWBLC26IGBNAAX35ZNW6HB4",
+              amountAlgo
+            );
+            luteTxnHash = result.txnHash;
+          } catch (luteErr) {
+            const errMsg = (luteErr as Error).message;
+            if (useLute) {
+              setApprovalError(errMsg);
+              return;
+            }
+          }
         }
       }
 
@@ -319,7 +330,7 @@ function WorkflowPanel() {
       });
       await refresh(workflow.id);
     } catch (err) {
-      alert(`Approval Error: ${(err as Error).message}`);
+      setApprovalError((err as Error).message);
     } finally {
       setApproving(null);
     }
@@ -406,10 +417,10 @@ function WorkflowPanel() {
 
       {/* Pending Approval Callout Banner */}
       {pendingApproval && (
-        <div className="flex flex-col gap-3 rounded-xl border border-amber-500/40 bg-amber-500/10 p-4 text-amber-200 animate-pulse">
+        <div className="flex flex-col gap-3 rounded-xl border border-amber-500/40 bg-amber-500/10 p-4 text-amber-200">
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2">
-              <Clock size={18} className="text-amber-400" />
+              <Clock size={18} className="text-amber-400 animate-pulse" />
               <p className="text-xs font-bold uppercase tracking-wider">Action Required: Human Approval Requested</p>
             </div>
             <span className="rounded-full bg-amber-400/20 px-2.5 py-0.5 text-xs font-bold text-amber-300">
@@ -421,6 +432,31 @@ function WorkflowPanel() {
             Provider <code className="rounded bg-black/40 px-1.5 py-0.5 font-mono text-amber-300">{String(pendingApproval.detail.providerId ?? "Provider")}</code> requested approval for: &ldquo;{String(pendingApproval.detail.reason ?? "Execute next workflow step")}&rdquo;.
           </p>
 
+          {approvalError && (
+            <div className="flex flex-col gap-2 rounded-lg border border-red-500/40 bg-red-500/15 p-3 text-xs text-red-200">
+              <p className="font-semibold text-red-300">Wallet Signing Notice:</p>
+              <p className="text-[11px] leading-relaxed">{approvalError}</p>
+
+              <div className="mt-1 flex flex-wrap items-center gap-2">
+                <a
+                  href="https://dispenser.testnet.aws.algorand.network/"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="rounded-full border border-amber-400/50 bg-amber-400/20 px-3 py-1 text-[11px] font-bold text-amber-200 hover:bg-amber-400/30"
+                >
+                  Get Free TestNet ALGOs
+                </a>
+                <button
+                  onClick={() => approve("approved", false, true)}
+                  disabled={approving !== null}
+                  className="rounded-full bg-[var(--color-cta)] px-3 py-1 text-[11px] font-semibold text-white hover:bg-[var(--color-cta-hover)]"
+                >
+                  Proceed with Veldar Server Settlement
+                </button>
+              </div>
+            </div>
+          )}
+
           <div className="mt-1 flex flex-wrap items-center gap-2">
             <button
               onClick={() => approve("approved", true)}
@@ -428,7 +464,7 @@ function WorkflowPanel() {
               className="flex items-center gap-2 rounded-full border border-emerald-500/50 bg-emerald-500/20 px-4 py-2 text-xs font-semibold text-emerald-300 transition-colors hover:bg-emerald-500/30 disabled:opacity-50"
             >
               <Wallet size={14} className="text-emerald-400" />
-              <span>Approve with Lute Wallet</span>
+              <span>{approving === "approved" ? "Signing with Lute..." : "Approve with Lute Wallet"}</span>
             </button>
 
             <button

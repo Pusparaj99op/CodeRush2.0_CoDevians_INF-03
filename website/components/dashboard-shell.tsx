@@ -59,26 +59,45 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
           </div>
         )}
 
-        <nav className="mb-10 flex gap-1 rounded-full border border-[var(--color-border)] bg-[var(--color-bg-elevated)] p-1 w-fit">
-          {TABS.map((tab) => {
-            const active = pathname === tab.href;
-            const Icon = tab.icon;
-            return (
-              <Link
-                key={tab.href}
-                href={tab.href}
-                className={
-                  active
-                    ? "flex items-center gap-1.5 rounded-full bg-[var(--color-accent)] px-4 py-2 text-sm font-semibold text-white"
-                    : "flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-medium text-[var(--color-body)] transition-colors hover:text-[var(--color-headline)]"
-                }
-              >
-                <Icon size={15} weight={active ? "fill" : "regular"} />
-                {tab.label}
-              </Link>
-            );
-          })}
-        </nav>
+        <div className="mb-10 flex flex-wrap items-center justify-between gap-4 border-b border-[var(--color-border)] pb-6">
+          <nav className="flex gap-1 rounded-full border border-[var(--color-border)] bg-[var(--color-bg-elevated)] p-1.5 shadow-sm">
+            {TABS.map((tab) => {
+              const active = pathname === tab.href;
+              const Icon = tab.icon;
+              return (
+                <Link
+                  key={tab.href}
+                  href={tab.href}
+                  className={
+                    active
+                      ? "flex items-center gap-1.5 rounded-full bg-[var(--color-accent)] px-4 py-2 text-xs font-semibold text-white shadow-sm"
+                      : "flex items-center gap-1.5 rounded-full px-4 py-2 text-xs font-medium text-[var(--color-body)] transition-colors hover:text-[var(--color-headline)]"
+                  }
+                >
+                  <Icon size={15} weight={active ? "fill" : "regular"} />
+                  {tab.label}
+                </Link>
+              );
+            })}
+          </nav>
+
+          <div className="flex items-center gap-3">
+            <a
+              href="https://dispenser.testnet.aws.algorand.network/"
+              target="_blank"
+              rel="noreferrer"
+              className="flex items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-500/10 px-3.5 py-1.5 text-xs font-semibold text-amber-300 transition-colors hover:bg-amber-500/20"
+            >
+              <span>Get Free TestNet ALGO</span>
+              <span className="rounded bg-amber-400/20 px-1.5 py-0.5 font-mono text-[10px] text-amber-200">Faucet</span>
+            </a>
+
+            <div className="flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3.5 py-1.5 text-xs font-semibold text-emerald-300">
+              <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+              <span>Verified Session ({user.email?.slice(0, 14)}...)</span>
+            </div>
+          </div>
+        </div>
 
         {children}
       </main>

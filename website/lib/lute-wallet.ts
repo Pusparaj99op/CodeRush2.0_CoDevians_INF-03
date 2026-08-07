@@ -99,13 +99,23 @@ export async function signPaymentWithLute(
   const signedBytes: Uint8Array =
     typeof firstSigned === "string" ? Buffer.from(firstSigned, "base64") : firstSigned;
 
-  const { txId } = await algodClient.sendRawTransaction(signedBytes).do();
-  await algosdk.waitForConfirmation(algodClient, txId, 4);
+  try {
+    const { txId } = await algodClient.sendRawTransaction(signedBytes).do();
+    await algosdk.waitForConfirmation(algodClient, txId, 4);
 
-  return {
-    txnHash: txId,
-    signedTxnHex: Buffer.from(signedBytes).toString("hex"),
-  };
+    return {
+      txnHash: txId,
+      signedTxnHex: Buffer.from(signedBytes).toString("hex"),
+    };
+  } catch (err) {
+    const msg = (err as Error).message ?? "";
+    if (msg.includes("overspend") || msg.includes("tried to spend")) {
+      throw new Error(
+        `Lute Wallet account (${validPayer.slice(0, 6)}...${validPayer.slice(-4)}) has insufficient TestNet ALGO balance for this transaction. Please fund your account using the Algorand TestNet Dispenser.`
+      );
+    }
+    throw err;
+  }
 }
 
 declare global {
