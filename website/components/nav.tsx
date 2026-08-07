@@ -7,11 +7,13 @@ import { useEffect, useRef, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 import GlassSurface from "./GlassSurface";
 
-import { LuteWalletButton } from "./lute-wallet-button";
+import { MultiWalletBar } from "./multi-wallet-bar";
 
 const LINKS = [
   { href: "/product", label: "Product" },
+  { href: "/travel-planner", label: "Travel Planner" },
   { href: "/algorand", label: "Algorand" },
+  { href: "/stellar", label: "Stellar" },
   { href: "/pricing", label: "Pricing" },
   { href: "/docs", label: "Docs" },
 ];
@@ -52,7 +54,7 @@ function AccountMenu() {
 
   return (
     <div ref={ref} className="relative z-[100] flex items-center gap-3">
-      <LuteWalletButton />
+      <MultiWalletBar />
 
       <Link
         href="/dashboard"

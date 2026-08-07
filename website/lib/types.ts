@@ -97,6 +97,8 @@ export interface Approval {
   decidedAt: string | null;
 }
 
+export type SupportedChain = "algorand" | "stellar";
+
 export interface Receipt {
   id: string;
   workflowId: string;
@@ -106,6 +108,7 @@ export interface Receipt {
   scheme: PaymentScheme;
   txnHash: string;
   network: "testnet";
+  chain?: SupportedChain;
   /** True when the txn id is synthetic and nothing settled on chain
    *  (keyless demo mode — see lib/settlement-mode.ts). */
   simulated: boolean;

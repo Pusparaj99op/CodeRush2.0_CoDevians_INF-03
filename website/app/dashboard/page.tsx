@@ -21,16 +21,34 @@ import {
   CaretRight,
   Copy,
   Check,
+  Planet,
+  DeviceMobile,
 } from "@phosphor-icons/react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { DashboardShell } from "@/components/dashboard-shell";
 import { authedFetch } from "@/lib/api-client";
+import { UrlProductScanner } from "@/components/url-product-scanner";
 import { useAuth } from "@/lib/auth-context";
 import { connectLuteWallet, signPaymentWithLute } from "@/lib/lute-wallet";
-import type { LedgerEvent, Tier, Workflow, WorkflowStep } from "@/lib/types";
+import { connectFreighterWallet, signPaymentWithFreighter } from "@/lib/freighter-wallet";
+import type { LedgerEvent, SupportedChain, Tier, Workflow, WorkflowStep } from "@/lib/types";
 
 const PRESET_GOALS = [
+  {
+    title: "iPhone 15 Pro Procurement (E-Commerce URL)",
+    goal: "Procure product from URL (https://apple.com/iphone-15-pro): Apple iPhone 15 Pro Max 256GB from Apple Store",
+    budget: 0.5,
+    icon: DeviceMobile,
+    badge: "E-Commerce",
+  },
+  {
+    title: "Tokyo Trip & Tech Package",
+    goal: "Book a trip to Tokyo with flights, hotel, and noise-canceling headphones under budget",
+    budget: 1.0,
+    icon: Sparkle,
+    badge: "Travel",
+  },
   {
     title: "Document Translation & Fact-Check",
     goal: "Translate and fact-check a document",
@@ -39,25 +57,11 @@ const PRESET_GOALS = [
     badge: "Popular",
   },
   {
-    title: "Tokyo Trip Booking & Hotel",
-    goal: "Book a trip to Tokyo with flights and hotel under budget",
-    budget: 1.0,
-    icon: Sparkle,
-    badge: "Travel",
-  },
-  {
     title: "Smart Contract Audit & Coverage",
     goal: "Analyze smart contract vulnerability and purchase coverage",
     budget: 0.5,
     icon: ShieldCheck,
     badge: "Security",
-  },
-  {
-    title: "Market Data & Sentiment Analysis",
-    goal: "Aggregate market data and generate sentiment report",
-    budget: 0.3,
-    icon: Lightning,
-    badge: "Data",
   },
 ];
 
@@ -87,8 +91,31 @@ function WorkflowForm() {
   const [goal, setGoal] = useState("Translate and fact-check a document");
   const [budget, setBudget] = useState(0.5);
   const [tier, setTier] = useState<Tier>("free");
+  const [chain, setChain] = useState<SupportedChain>("algorand");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const draftGoal = localStorage.getItem("veldar:draft_goal");
+    const draftBudget = localStorage.getItem("veldar:draft_budget");
+    if (draftGoal) {
+      setGoal(draftGoal);
+      localStorage.removeItem("veldar:draft_goal");
+    }
+    if (draftBudget) {
+      setBudget(Number(draftBudget));
+      localStorage.removeItem("veldar:draft_budget");
+    }
+
+    function handleFillGoal(e: Event) {
+      const detail = (e as CustomEvent<{ goal: string; budgetAlgo?: number }>).detail;
+      if (detail.goal) setGoal(detail.goal);
+      if (detail.budgetAlgo) setBudget(detail.budgetAlgo);
+    }
+    window.addEventListener("veldar:fill-goal", handleFillGoal);
+    return () => window.removeEventListener("veldar:fill-goal", handleFillGoal);
+  }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -98,7 +125,7 @@ function WorkflowForm() {
     try {
       const res = await authedFetch("/api/workflows", {
         method: "POST",
-        body: JSON.stringify({ goal, budgetAlgo: budget, tier }),
+        body: JSON.stringify({ goal, budgetAlgo: budget, tier, chain }),
       });
       const body = await res.json();
       if (!res.ok) throw new Error(body.error ?? "failed to create workflow");
@@ -145,7 +172,7 @@ function WorkflowForm() {
         <div className="grid grid-cols-2 gap-3">
           <div className="flex flex-col gap-2">
             <label htmlFor="budget" className="text-xs font-semibold text-[var(--color-headline)]">
-              Max Budget (ALGO)
+              Max Budget
             </label>
             <input
               id="budget"
@@ -159,18 +186,17 @@ function WorkflowForm() {
           </div>
 
           <div className="flex flex-col gap-2">
-            <label htmlFor="tier" className="text-xs font-semibold text-[var(--color-headline)]">
-              Subscription Tier
+            <label htmlFor="chain" className="text-xs font-semibold text-[var(--color-headline)]">
+              Payment Chain
             </label>
             <select
-              id="tier"
-              value={tier}
-              onChange={(e) => setTier(e.target.value as Tier)}
+              id="chain"
+              value={chain}
+              onChange={(e) => setChain(e.target.value as SupportedChain)}
               className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)] px-3 py-2 text-sm text-[var(--color-headline)] focus:border-[var(--color-accent)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]/40"
             >
-              <option value="free">Free (2.5% fee)</option>
-              <option value="pro">Pro (1% fee)</option>
-              <option value="promax">ProMax (0% fee)</option>
+              <option value="algorand">Algorand (Lute)</option>
+              <option value="stellar">Stellar (Freight)</option>
             </select>
           </div>
         </div>
@@ -195,6 +221,9 @@ function WorkflowForm() {
           )}
         </button>
       </form>
+
+      {/* E-Commerce URL Product Scanner */}
+      <UrlProductScanner />
 
       {/* Preset Quick Launchers */}
       <div className="flex flex-col gap-3 rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg-elevated)] p-5">
@@ -294,7 +323,7 @@ function WorkflowPanel() {
 
   const [approvalError, setApprovalError] = useState<string | null>(null);
 
-  async function approve(decision: "approved" | "denied", useLute = false, forceServerFallback = false) {
+  async function approve(decision: "approved" | "denied", walletType: "lute" | "freighter" | "server" = "server") {
     if (!workflow || !pendingApproval) return;
     setApproving(decision);
     setApprovalError(null);
@@ -302,25 +331,35 @@ function WorkflowPanel() {
       const approvalId = pendingApproval.detail.approvalId as string;
       let luteTxnHash: string | undefined;
 
-      if (decision === "approved" && !forceServerFallback) {
-        const savedLuteAddr = typeof window !== "undefined" ? localStorage.getItem("veldar:lute_address") : null;
-        if (useLute || savedLuteAddr) {
-          try {
-            const luteAddr = savedLuteAddr ?? (await connectLuteWallet());
-            const amountAlgo = (pendingApproval.detail.amountAlgo as number) ?? 1.0;
-            const result = await signPaymentWithLute(
-              luteAddr,
-              "4SNSKGZL6TUKMZKJ3BELVCOXTZ653N2OVOKVWBLC26IGBNAAX35ZNW6HB4",
-              amountAlgo
-            );
-            luteTxnHash = result.txnHash;
-          } catch (luteErr) {
-            const errMsg = (luteErr as Error).message;
-            if (useLute) {
-              setApprovalError(errMsg);
-              return;
-            }
-          }
+      if (decision === "approved" && walletType === "lute") {
+        try {
+          const savedLuteAddr = typeof window !== "undefined" ? localStorage.getItem("veldar:lute_address") : null;
+          const luteAddr = savedLuteAddr ?? (await connectLuteWallet());
+          const amountAlgo = (pendingApproval.detail.amountAlgo as number) ?? 1.0;
+          const result = await signPaymentWithLute(
+            luteAddr,
+            "4SNSKGZL6TUKMZKJ3BELVCOXTZ653N2OVOKVWBLC26IGBNAAX35ZNW6HB4",
+            amountAlgo
+          );
+          luteTxnHash = result.txnHash;
+        } catch (luteErr) {
+          setApprovalError((luteErr as Error).message);
+          return;
+        }
+      } else if (decision === "approved" && walletType === "freighter") {
+        try {
+          const savedKey = typeof window !== "undefined" ? localStorage.getItem("veldar:freighter_key") : null;
+          const pubKey = savedKey ?? (await connectFreighterWallet());
+          const amountXlm = (pendingApproval.detail.amountAlgo as number) ?? 1.0;
+          const result = await signPaymentWithFreighter(
+            pubKey,
+            "GBRPYHIL2CI3FNQ4BXLFMNDLFPPPU2HY523XYT6WL3L32T7MYW27L3R",
+            amountXlm
+          );
+          luteTxnHash = result.txnHash;
+        } catch (freighterErr) {
+          setApprovalError((freighterErr as Error).message);
+          return;
         }
       }
 
@@ -344,7 +383,7 @@ function WorkflowPanel() {
         </div>
         <h3 className="text-base font-semibold text-[var(--color-headline)]">No Active Workflow</h3>
         <p className="mt-1 max-w-sm text-xs text-[var(--color-muted)] leading-relaxed">
-          Select a quick template or type a goal on the left to watch Veldar assemble providers, quote pricing, request approvals, and settle payments on Algorand.
+          Select a quick template or type a goal on the left to watch Veldar assemble providers, quote pricing, request approvals, and settle payments.
         </p>
       </div>
     );
@@ -389,7 +428,7 @@ function WorkflowPanel() {
         <div>
           <p className="text-[11px] font-medium text-[var(--color-muted)] uppercase tracking-wider">Spent / Budget</p>
           <p className="mt-1 text-base font-bold font-mono text-[var(--color-headline)]">
-            {workflow.spentAlgo.toFixed(2)} / {workflow.budgetAlgo} <span className="text-xs font-sans font-normal text-[var(--color-accent)]">ALGO</span>
+            {workflow.spentAlgo.toFixed(2)} / {workflow.budgetAlgo} <span className="text-xs font-sans font-normal text-[var(--color-accent)]">MAX</span>
           </p>
           <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-white/10">
             <div
@@ -410,7 +449,7 @@ function WorkflowPanel() {
           <p className="text-[11px] font-medium text-[var(--color-muted)] uppercase tracking-wider">Settlement Network</p>
           <div className="mt-1 flex items-center gap-2 text-xs font-semibold text-emerald-300">
             <ShieldCheck size={16} className="text-emerald-400" />
-            <span>Algorand TestNet</span>
+            <span>Algorand & Stellar Multi-Chain TestNet</span>
           </div>
         </div>
       </div>
@@ -424,7 +463,7 @@ function WorkflowPanel() {
               <p className="text-xs font-bold uppercase tracking-wider">Action Required: Human Approval Requested</p>
             </div>
             <span className="rounded-full bg-amber-400/20 px-2.5 py-0.5 text-xs font-bold text-amber-300">
-              {(pendingApproval.detail.amountAlgo as number) ?? 1.0} ALGO
+              {(pendingApproval.detail.amountAlgo as number) ?? 1.0}
             </span>
           </div>
 
@@ -438,16 +477,8 @@ function WorkflowPanel() {
               <p className="text-[11px] leading-relaxed">{approvalError}</p>
 
               <div className="mt-1 flex flex-wrap items-center gap-2">
-                <a
-                  href="https://dispenser.testnet.aws.algorand.network/"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="rounded-full border border-amber-400/50 bg-amber-400/20 px-3 py-1 text-[11px] font-bold text-amber-200 hover:bg-amber-400/30"
-                >
-                  Get Free TestNet ALGOs
-                </a>
                 <button
-                  onClick={() => approve("approved", false, true)}
+                  onClick={() => approve("approved", "server")}
                   disabled={approving !== null}
                   className="rounded-full bg-[var(--color-cta)] px-3 py-1 text-[11px] font-semibold text-white hover:bg-[var(--color-cta-hover)]"
                 >
@@ -459,20 +490,29 @@ function WorkflowPanel() {
 
           <div className="mt-1 flex flex-wrap items-center gap-2">
             <button
-              onClick={() => approve("approved", true)}
+              onClick={() => approve("approved", "freighter")}
+              disabled={approving !== null}
+              className="flex items-center gap-2 rounded-full border border-sky-500/50 bg-sky-500/20 px-4 py-2 text-xs font-semibold text-sky-300 transition-colors hover:bg-sky-500/30 disabled:opacity-50"
+            >
+              <Planet size={14} className="text-sky-400" />
+              <span>{approving === "approved" ? "Signing..." : "Approve with Freight Wallet"}</span>
+            </button>
+
+            <button
+              onClick={() => approve("approved", "lute")}
               disabled={approving !== null}
               className="flex items-center gap-2 rounded-full border border-emerald-500/50 bg-emerald-500/20 px-4 py-2 text-xs font-semibold text-emerald-300 transition-colors hover:bg-emerald-500/30 disabled:opacity-50"
             >
               <Wallet size={14} className="text-emerald-400" />
-              <span>{approving === "approved" ? "Signing with Lute..." : "Approve with Lute Wallet"}</span>
+              <span>{approving === "approved" ? "Signing..." : "Approve with Lute Wallet"}</span>
             </button>
 
             <button
-              onClick={() => approve("approved")}
+              onClick={() => approve("approved", "server")}
               disabled={approving !== null}
               className="rounded-full bg-[var(--color-cta)] px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-[var(--color-cta-hover)] disabled:opacity-50"
             >
-              Approve {(pendingApproval.detail.amountAlgo as number) ?? ""} ALGO
+              Approve {(pendingApproval.detail.amountAlgo as number) ?? ""}
             </button>
 
             <button
