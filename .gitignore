@@ -1,1 +1,8 @@
 /.claude
+
+# website (Next.js)
+website/node_modules
+website/.next
+website/next-env.d.ts
+website/.env*.local
+website/.env
