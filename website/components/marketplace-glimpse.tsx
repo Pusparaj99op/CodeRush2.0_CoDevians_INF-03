@@ -147,30 +147,24 @@ export function MarketplaceGlimpse() {
                     <p className="mt-2.5 font-mono text-xs font-medium text-[var(--color-body)]">{p.pricing}</p>
 
                     <div className="mt-4 pt-3 border-t border-white/5 flex items-center gap-2">
-                      <SpecularButton
+                      <button
+                        type="button"
                         onClick={() => handleTestProvider(p.name)}
                         disabled={isTestingThis}
-                        size="sm"
-                        radius={9999}
-                        tint="#ff5228"
-                        tintOpacity={0.12}
-                        lineColor="#ff7a59"
-                        baseColor="#ff5228"
-                        autoAnimate={false}
-                        className="w-full"
+                        className="w-full flex items-center justify-center gap-2 rounded-full border border-[#ff5228] bg-[#ff5228]/15 px-4 py-2.5 text-xs font-semibold text-white transition-all hover:bg-[#ff5228] hover:shadow-[0_4px_20px_rgba(255,82,40,0.4)] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed font-poppins"
                       >
                         {isTestingThis ? (
                           <>
-                            <Spinner size={12} className="animate-spin" />
+                            <Spinner size={13} className="animate-spin" />
                             <span>Probing...</span>
                           </>
                         ) : (
                           <>
-                            <Play size={12} weight="fill" />
+                            <Play size={13} weight="fill" />
                             <span>Test API Endpoint</span>
                           </>
                         )}
-                      </SpecularButton>
+                      </button>
                     </div>
                   </div>
                 </div>

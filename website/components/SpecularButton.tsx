@@ -188,8 +188,10 @@ export default function SpecularButton({
         const h = rect.height || 40;
         sizeRef.w = w;
         sizeRef.h = h;
-        renderer.setSize(w + PAD * 2, h + PAD * 2);
-        program.uniforms.uCenter.value = [(PAD + w / 2) * dpr, (PAD + h / 2) * dpr];
+        const totalW = w + PAD * 2;
+        const totalH = h + PAD * 2;
+        renderer.setSize(totalW, totalH);
+        program.uniforms.uCenter.value = [(totalW / 2) * dpr, (totalH / 2) * dpr];
         program.uniforms.uHalfSize.value = [(w / 2) * dpr, (h / 2) * dpr];
       };
 

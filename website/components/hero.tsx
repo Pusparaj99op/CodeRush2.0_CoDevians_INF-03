@@ -3,6 +3,7 @@
 import { Check } from "@phosphor-icons/react";
 import { useRouter } from "next/navigation";
 import SpecularButton from "./SpecularButton";
+import CursorGrid from "./CursorGrid";
 import { TracePreview } from "./trace-preview";
 
 export function Hero() {
@@ -86,9 +87,27 @@ export function Hero() {
           </p>
         </div>
 
-        {/* Right Column: Hero Centerpiece Showcase Card */}
-        <div className="lg:col-span-5 lg:pl-2">
-          <div className="relative rounded-[2.5rem] border border-white/15 bg-gradient-to-b from-white/10 via-white/[0.03] to-transparent p-1.5 shadow-[0_30px_90px_rgba(0,0,0,0.85),_0_0_50px_rgba(255,82,40,0.22)] backdrop-blur-2xl">
+        {/* Right Column: Hero Centerpiece Showcase Card with CursorGrid interactive background */}
+        <div className="lg:col-span-5 lg:pl-2 relative">
+          <div className="absolute inset-0 z-0 rounded-[2.5rem] overflow-hidden pointer-events-auto">
+            <CursorGrid
+              cellSize={60}
+              color="#ff5228"
+              radius={150}
+              falloff="smooth"
+              holdTime={400}
+              fadeDuration={800}
+              lineWidth={1.2}
+              maxOpacity={1}
+              fillOpacity={0.15}
+              gridOpacity={0.08}
+              cellRadius={6}
+              clickPulse
+              pulseSpeed={600}
+            />
+          </div>
+
+          <div className="relative z-10 rounded-[2.5rem] border border-white/15 bg-gradient-to-b from-white/10 via-white/[0.03] to-transparent p-1.5 shadow-[0_30px_90px_rgba(0,0,0,0.85),_0_0_50px_rgba(255,82,40,0.22)] backdrop-blur-2xl">
             <div className="rounded-[2.2rem] bg-[#0c0a09]/95 p-6 lg:p-8">
               <TracePreview />
             </div>
