@@ -1,6 +1,5 @@
 "use client";
 
-import { Check } from "@phosphor-icons/react";
 import { useRouter } from "next/navigation";
 import SpecularButton from "./SpecularButton";
 import CursorGrid from "./CursorGrid";
@@ -64,22 +63,7 @@ export function Hero() {
             x402 micropayments, and keeps budgets and approvals 100% visible before anything is final.
           </p>
 
-          {/* Checklist */}
-          <div className="mt-9 grid grid-cols-1 gap-4 sm:grid-cols-2 max-w-xl">
-            {[
-              "Earn with every purchase",
-              "Instant x402 micropayments",
-              "Strict budget enforcement",
-              "No hidden fees",
-            ].map((item) => (
-              <div key={item} className="flex items-center gap-3">
-                <div className="grid h-6 w-6 shrink-0 place-items-center rounded-full border border-[#ff5228]/80 bg-[#ff5228]/15 text-[#ff5228] shadow-[0_0_10px_rgba(255,82,40,0.3)]">
-                  <Check size={13} weight="bold" />
-                </div>
-                <span className="text-sm md:text-base font-medium text-[var(--color-headline)]">{item}</span>
-              </div>
-            ))}
-          </div>
+
 
           {/* Email / CTA bar */}
           <div className="mt-10 flex max-w-lg items-center gap-2 rounded-full border border-white/15 bg-white/[0.04] p-2 shadow-2xl backdrop-blur-2xl transition-all focus-within:border-[#ff5228]/60 focus-within:ring-2 focus-within:ring-[#ff5228]/20">
