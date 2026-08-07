@@ -8,6 +8,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { settlePayment, verifyPayment, type PaymentPayload } from "@/lib/facilitator";
+import { FACILITATOR_PAYEE_ADDRESS } from "@/lib/facilitator-config";
 import { logEvent } from "@/lib/orchestrator";
 import { getProvider } from "@/lib/providers";
 import { store } from "@/lib/store";
@@ -18,9 +19,6 @@ interface SettleBody {
   stepId: string;
   payload: PaymentPayload;
 }
-
-const FACILITATOR_PAYEE_ADDRESS =
-  process.env.FACILITATOR_PAYEE_ADDRESS ?? "FACILITATORPLACEHOLDERADDRESSTESTNETONLY";
 
 export async function POST(req: NextRequest) {
   let body: SettleBody;
