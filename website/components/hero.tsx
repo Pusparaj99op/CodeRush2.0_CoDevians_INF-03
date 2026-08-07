@@ -12,6 +12,19 @@ export function Hero() {
 
       <div className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-12 px-6 lg:grid-cols-2 lg:gap-8 lg:px-8">
         <div>
+          <div className="mb-6 flex flex-wrap items-center gap-2">
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-[var(--color-border)] bg-white/5 px-3 py-1 text-xs font-medium text-[var(--color-headline)]">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400"></span>
+              Algorand TestNet
+            </span>
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-[var(--color-border)] bg-white/5 px-3 py-1 text-xs font-medium text-[var(--color-body)]">
+              x402 Micropayments
+            </span>
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-[var(--color-border)] bg-white/5 px-3 py-1 text-xs font-medium text-[var(--color-body)]">
+              Budget Enforced
+            </span>
+          </div>
+
           <h1 className="font-[family-name:var(--font-display)] text-4xl font-medium leading-[1.05] tracking-tight text-[var(--color-headline)] md:text-5xl lg:text-6xl">
             An agent that spends carefully.
           </h1>

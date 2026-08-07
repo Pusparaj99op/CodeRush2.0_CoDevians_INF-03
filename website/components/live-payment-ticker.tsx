@@ -1,0 +1,168 @@
+"use client";
+
+import { ArrowClockwise, CheckCircle, CircleDashed, Coins, Hourglass, Lightning } from "@phosphor-icons/react";
+import { motion, useReducedMotion } from "motion/react";
+import { useEffect, useState } from "react";
+
+interface FeedItem {
+  id: string;
+  label: string;
+  provider: string;
+  amount: string;
+  algoVal: number;
+  status: "fulfilled" | "paid" | "awaiting_approval" | "processing";
+  timestamp: string;
+}
+
+const INITIAL_FEED: FeedItem[] = [
+  { id: "1", label: "Translate query context", provider: "translate-api.algorand", amount: "2.5 ALGO", algoVal: 2.5, status: "fulfilled", timestamp: "12:41:03" },
+  { id: "2", label: "Fact-check translation", provider: "fact-check-api.algo", amount: "1.0 ALGO", algoVal: 1.0, status: "paid", timestamp: "12:41:07" },
+  { id: "3", label: "Local verification pass", provider: "veldar-laptop-rtx4050", amount: "up to 3.0 ALGO", algoVal: 3.0, status: "awaiting_approval", timestamp: "12:41:12" },
+];
+
+const STREAMING_POOL = [
+  { label: "Search vector index", provider: "pinecone-adapter.algo", amount: "0.4 ALGO", algoVal: 0.4 },
+  { label: "Synthesize summary", provider: "llama-3b-local", amount: "1.2 ALGO", algoVal: 1.2 },
+  { label: "Anchor hash on-chain", provider: "x402-facilitator.testnet", amount: "0.1 ALGO", algoVal: 0.1 },
+  { label: "Code audit pass", provider: "audit-bot.algo", amount: "2.0 ALGO", algoVal: 2.0 },
+];
+
+const STATUS_META = {
+  fulfilled: { icon: CheckCircle, text: "text-emerald-400", label: "Verified On-Chain", badge: "bg-emerald-500/10 border-emerald-500/20 text-emerald-300" },
+  paid: { icon: Coins, text: "text-[var(--color-cta)]", label: "Paid x402", badge: "bg-[var(--color-cta)]/10 border-[var(--color-cta)]/20 text-[var(--color-cta)]" },
+  awaiting_approval: { icon: Hourglass, text: "text-[var(--color-accent)]", label: "Awaiting Cap Approval", badge: "bg-[var(--color-accent)]/10 border-[var(--color-accent)]/20 text-[var(--color-accent)]" },
+  processing: { icon: CircleDashed, text: "text-amber-400 animate-spin", label: "Quoting Marketplace", badge: "bg-amber-500/10 border-amber-500/20 text-amber-300" },
+} as const;
+
+export function LivePaymentTicker() {
+  const reduce = useReducedMotion();
+  const [feed, setFeed] = useState<FeedItem[]>(INITIAL_FEED);
+  const [totalSpent, setTotalSpent] = useState(3.5);
+  const maxBudget = 6.5;
+
+  useEffect(() => {
+    if (reduce) return;
+
+    let poolIdx = 0;
+    const interval = setInterval(() => {
+      const item = STREAMING_POOL[poolIdx % STREAMING_POOL.length];
+      poolIdx++;
+      if (!item) return;
+
+      const now = new Date();
+      const timestamp = now.toTimeString().split(" ")[0] ?? "";
+
+      const newItem: FeedItem = {
+        id: Date.now().toString(),
+        label: item.label,
+        provider: item.provider,
+        amount: item.amount,
+        algoVal: item.algoVal,
+        status: "fulfilled",
+        timestamp,
+      };
+
+      setFeed((prev) => [newItem, ...prev.slice(0, 4)]);
+      setTotalSpent((prev) => (prev + item.algoVal > maxBudget ? 3.5 : parseFloat((prev + item.algoVal).toFixed(1))));
+    }, 3500);
+
+    return () => clearInterval(interval);
+  }, [reduce]);
+
+  const percentage = Math.min(100, Math.round((totalSpent / maxBudget) * 100));
+
+  return (
+    <section className="py-20 lg:py-28">
+      <div className="mx-auto max-w-7xl px-6 lg:px-8">
+        <div className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-end">
+          <div>
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-[var(--color-cta)]/30 bg-[var(--color-cta)]/10 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-[var(--color-cta)]">
+              <Lightning size={14} weight="fill" />
+              Live Web3 Payment Feed
+            </span>
+            <h2 className="mt-3 font-[family-name:var(--font-display)] text-3xl font-medium leading-tight text-[var(--color-headline)] md:text-4xl">
+              Algorand micropayments in motion.
+            </h2>
+          </div>
+          <p className="max-w-md text-sm text-[var(--color-body)]">
+            As your agent executes multi-provider steps, payments settle automatically via x402 with on-chain cryptographic proofs.
+          </p>
+        </div>
+
+        <div className="mt-10 overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg-elevated)] p-6 shadow-[0_30px_90px_rgba(0,0,0,0.5)]">
+          {/* Header Bar */}
+          <div className="mb-6 flex flex-wrap items-center justify-between gap-4 border-b border-[var(--color-border)] pb-4 font-mono text-xs">
+            <div className="flex items-center gap-2 text-[var(--color-headline)]">
+              <span className="relative flex h-2 w-2">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500"></span>
+              </span>
+              <span>LIVE x402 FACILITATOR FEED</span>
+            </div>
+
+            <div className="flex items-center gap-4 text-[var(--color-muted)]">
+              <span className="flex items-center gap-1">
+                <ArrowClockwise size={12} className="animate-spin text-emerald-400" />
+                Algorand TestNet
+              </span>
+              <span>•</span>
+              <span>Block Finality: ~3.3s</span>
+            </div>
+          </div>
+
+          {/* Feed List */}
+          <div className="flex flex-col gap-3">
+            {feed.map((row) => {
+              const meta = STATUS_META[row.status];
+              const Icon = meta.icon;
+              return (
+                <motion.div
+                  key={row.id}
+                  layout
+                  initial={reduce ? false : { opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3 }}
+                  className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[var(--color-border)] bg-white/[0.02] p-4 transition-colors hover:bg-white/[0.04]"
+                >
+                  <div className="flex items-center gap-3">
+                    <Icon size={20} weight="fill" className={meta.text} />
+                    <div>
+                      <p className="text-sm font-medium text-[var(--color-headline)]">{row.label}</p>
+                      <p className="font-mono text-xs text-[var(--color-muted)]">{row.provider}</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-4 text-right">
+                    <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-[11px] font-medium ${meta.badge}`}>
+                      {meta.label}
+                    </span>
+                    <div>
+                      <p className="font-mono text-sm font-semibold text-[var(--color-headline)]">{row.amount}</p>
+                      <p className="font-mono text-[10px] text-[var(--color-footer-dim)]">{row.timestamp}</p>
+                    </div>
+                  </div>
+                </motion.div>
+              );
+            })}
+          </div>
+
+          {/* Live Budget Bar */}
+          <div className="mt-6 rounded-xl border border-[var(--color-border)] bg-white/[0.015] p-4">
+            <div className="mb-2 flex items-center justify-between text-xs">
+              <span className="font-medium text-[var(--color-headline)]">Workflow Budget Utilization</span>
+              <span className="font-mono text-[var(--color-body)]">
+                {totalSpent} / {maxBudget} ALGO ({percentage}%)
+              </span>
+            </div>
+            <div className="h-2 w-full overflow-hidden rounded-full bg-white/10">
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-[var(--color-accent)] to-[var(--color-cta)] transition-all duration-500"
+                style={{ width: `${percentage}%` }}
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
