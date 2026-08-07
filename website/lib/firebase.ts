@@ -23,6 +23,8 @@ export const isFirebaseConfigured = Boolean(
   firebaseConfig.apiKey && firebaseConfig.authDomain && firebaseConfig.projectId && firebaseConfig.appId
 );
 
+const APP_NAME = "veldar-web";
+
 let app: FirebaseApp | null = null;
 let auth: Auth | null = null;
 
@@ -30,7 +32,11 @@ let auth: Auth | null = null;
 export function getFirebaseAuth(): Auth | null {
   if (!isFirebaseConfigured) return null;
   if (!app) {
-    app = getApps()[0] ?? initializeApp(firebaseConfig);
+    // Look this app up by name rather than taking getApps()[0]: any other
+    // Firebase app initialized on the page would otherwise be reused here with
+    // the wrong config, which surfaces as opaque auth/internal-error.
+    app =
+      getApps().find((a) => a.name === APP_NAME) ?? initializeApp(firebaseConfig, APP_NAME);
   }
   if (!auth) {
     auth = getAuth(app);

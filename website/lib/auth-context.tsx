@@ -26,12 +26,47 @@ import {
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
 import { getFirebaseAuth, isFirebaseConfigured } from "./firebase";
 
+// Codes where the popup transport itself is at fault, so retrying the same
+// sign-in as a full-page redirect is worth doing.
+//
+// auth/internal-error belongs here: it's the SDK's catch-all when the popup or
+// its cross-origin __/auth/iframe can't complete the handshake — most often
+// because the browser partitions or blocks third-party storage for
+// firebaseapp.com (Chrome's third-party-cookie phase-out, Safari ITP, in-app
+// webviews). The redirect flow is same-tab and doesn't need that iframe.
 const POPUP_FALLBACK_CODES = new Set([
   "auth/popup-blocked",
   "auth/popup-closed-by-user",
   "auth/cancelled-popup-request",
   "auth/operation-not-supported-in-this-environment",
+  "auth/internal-error",
+  "auth/web-storage-unsupported",
+  "auth/timeout",
 ]);
+
+/**
+ * Firebase hides the real cause of opaque codes (`auth/internal-error` above
+ * all) inside `message` and `customData`. Log the whole thing so a failure is
+ * diagnosable from the browser console instead of just a code.
+ */
+function logAuthError(stage: string, err: unknown) {
+  const e = err as {
+    code?: string;
+    message?: string;
+    customData?: Record<string, unknown>;
+  };
+  console.error(`[auth] ${stage} failed`, {
+    code: e.code,
+    message: e.message,
+    customData: e.customData,
+    // Raw Identity Toolkit response, when there was one.
+    tokenResponse: (e.customData as { _tokenResponse?: unknown } | undefined)?._tokenResponse,
+    origin: typeof window !== "undefined" ? window.location.origin : null,
+    authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+    cookiesEnabled: typeof navigator !== "undefined" ? navigator.cookieEnabled : null,
+    raw: err,
+  });
+}
 
 interface AuthContextValue {
   user: User | null;
@@ -72,6 +107,13 @@ function describeAuthError(code: string): string {
       return "Too many attempts. Wait a moment and try again.";
     case "auth/operation-not-allowed":
       return "Email/password sign-in isn't enabled for this Firebase project yet. Enable it under Authentication > Sign-in method.";
+    case "auth/account-exists-with-different-credential":
+      return "An account with this email already exists using a different sign-in method. Sign in that way first, then link Google.";
+    case "auth/user-disabled":
+      return "This account has been disabled.";
+    case "auth/web-storage-unsupported":
+    case "auth/internal-error":
+      return "Your browser blocked the sign-in window (this usually means third-party cookies are off). Redirecting you to Google instead — if that also fails, try a different browser or allow third-party cookies for this site.";
     default:
       return `Sign-in failed (${code}). Try again.`;
   }
@@ -81,6 +123,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [authError, setAuthError] = useState<string | null>(null);
+  // Bumped when the current User object is mutated in place (see signUpWithEmail).
+  const [, setUserVersion] = useState(0);
 
   useEffect(() => {
     const auth = getFirebaseAuth();
@@ -89,16 +133,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
+    let active = true;
+
+    // Completes a signInWithRedirect started on a previous page load. Resolves
+    // to null (not an error) when no redirect is pending, so this is safe to
+    // run unconditionally on every mount.
     getRedirectResult(auth).catch((err) => {
+      logAuthError("getRedirectResult", err);
+      if (!active) return;
       const code = (err as { code?: string }).code ?? "auth/unknown-error";
       setAuthError(describeAuthError(code));
     });
 
     const unsubscribe = onAuthStateChanged(auth, (u) => {
+      if (!active) return;
       setUser(u);
       setLoading(false);
     });
-    return unsubscribe;
+    return () => {
+      active = false;
+      unsubscribe();
+    };
   }, []);
 
   /** Shared guard: every entry point needs configured Firebase. */
@@ -113,6 +168,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   function reportError(err: unknown): false {
+    logAuthError("email auth", err);
     const code = (err as { code?: string }).code ?? "auth/unknown-error";
     setAuthError(describeAuthError(code));
     return false;
@@ -123,15 +179,38 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!auth) return;
 
     const provider = new GoogleAuthProvider();
+    // Always show the account chooser. Without this, Google reuses whatever
+    // session the browser already has, which silently signs the user into the
+    // wrong account and gives no way to switch.
+    provider.setCustomParameters({ prompt: "select_account" });
+
     try {
       await signInWithPopup(auth, provider);
+      return;
     } catch (err) {
+      logAuthError("signInWithPopup", err);
       const code = (err as { code?: string }).code ?? "auth/unknown-error";
-      if (POPUP_FALLBACK_CODES.has(code)) {
-        await signInWithRedirect(auth, provider);
+
+      // User-initiated cancellation: not worth a redirect or an error banner.
+      if (code === "auth/popup-closed-by-user" || code === "auth/cancelled-popup-request") {
         return;
       }
+
+      if (!POPUP_FALLBACK_CODES.has(code)) {
+        setAuthError(describeAuthError(code));
+        return;
+      }
+
+      // Popup transport failed. Tell the user why before we navigate away,
+      // then retry the same sign-in as a full-page redirect.
       setAuthError(describeAuthError(code));
+      try {
+        await signInWithRedirect(auth, provider);
+      } catch (redirectErr) {
+        logAuthError("signInWithRedirect", redirectErr);
+        const redirectCode = (redirectErr as { code?: string }).code ?? "auth/unknown-error";
+        setAuthError(describeAuthError(redirectCode));
+      }
     }
   }
 
@@ -157,9 +236,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const credential = await createUserWithEmailAndPassword(auth, email, password);
       if (displayName?.trim()) {
         await updateProfile(credential.user, { displayName: displayName.trim() });
-        // onAuthStateChanged already fired with the pre-update user, so push
-        // the profile change into state ourselves.
-        setUser({ ...credential.user, displayName: displayName.trim() } as User);
+        // updateProfile mutates the live User in place and onAuthStateChanged
+        // already fired with the pre-update object, so React sees no new
+        // reference. Bump a counter to re-render instead of copying the User —
+        // a spread would drop its prototype methods (getIdToken, reload, ...).
+        setUserVersion((v) => v + 1);
       }
       return true;
     } catch (err) {
