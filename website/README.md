@@ -45,6 +45,29 @@ Until those env vars are set, `lib/firebase.ts` reports `isFirebaseConfigured
 = false` and the UI shows a "Firebase isn't configured yet" state instead of
 crashing.
 
+**If sign-in fails on a deployed domain** (`auth/unauthorized-domain` in the
+error banner the UI now shows): Firebase only allows Google sign-in from
+domains explicitly listed under Authentication > Settings > Authorized
+domains. `localhost` is allowlisted by default, but a new deploy domain is
+not. Add every domain the site is served from, e.g.:
+
+- `veldar-gray.vercel.app`
+- `codevians.online` and `www.codevians.online`
+- any other Vercel preview domain you test from
+
+`lib/auth-context.tsx` also falls back from popup to `signInWithRedirect`
+automatically when the popup is blocked or closed (common on iOS Safari /
+in-app browsers), and surfaces the real Firebase error message in the UI
+instead of failing silently.
+
+### Full app access from the website
+
+The dashboard is a tab shell (`components/dashboard-shell.tsx`), not a
+single page: **Overview** (submit a goal, approve/deny, live trace),
+**Workflows** (`/dashboard/workflows`, full history via `GET
+/api/workflows?userId=`), and **Settings** (`/dashboard/settings`, profile
+and default tier). Every workflow links to its full `/trace/[id]` view.
+
 ## What's implemented
 
 - **Orchestrator** (`lib/orchestrator.ts`): compiles a goal into a step
