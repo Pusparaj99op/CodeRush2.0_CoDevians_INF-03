@@ -1,106 +1,54 @@
 @import "tailwindcss";
 
-:root {
-  /* BetterOff Studio Editorial Palette */
-  --color-bg: #F5F3F0;
-  --color-surface: #EDEAE5;
-  --color-ink: #1A1916;
-  --color-ink-muted: #6B6660;
-  --color-ink-faint: #B5B1AB;
-  --color-accent: #C9A84C;
-  --color-accent-dim: #8A7033;
-  --color-green: #2E6B4F;
-  --color-white: #FAFAF8;
-  --color-bg-elevated: #EDEAE5;
-  --color-headline: #1A1916;
-  --color-body: #2D2B27;
-  --color-muted: #6B6660;
-  --color-border: #D8D4CE;
-  --color-cta: #1A1916;
-  --color-cta-hover: #383530;
-
-  /* Typography variables */
-  --font-display: var(--font-cormorant), 'Georgia', serif;
-  --font-sans: var(--font-dm-sans), 'Helvetica Neue', sans-serif;
-  --font-mono: var(--font-dm-mono), 'Courier New', monospace;
-
-  /* Type Scale */
-  --type-display: clamp(3.5rem, 9vw, 9rem);
-  --type-h2: clamp(2.5rem, 5vw, 5.5rem);
-  --type-h3: clamp(1.5rem, 2.5vw, 2.2rem);
-  --type-body: clamp(0.95rem, 1.2vw, 1.125rem);
-  --type-eyebrow: 0.72rem;
-  --type-mono: clamp(0.85rem, 1vw, 1rem);
+/*
+ * FlechaM-Medium is a licensed display font (see Doc/specs/00-overview.md
+ * brand notes) and its files are not in this repo. Drop the woff2 into
+ * public/fonts/ and uncomment the @font-face below to activate it; until
+ * then --font-display falls back to Poppins, which is close enough in
+ * weight/roundness to ship with.
+ */
+/*
+@font-face {
+  font-family: "FlechaM-Medium";
+  src: url("/fonts/FlechaM-Medium.woff2") format("woff2");
+  font-weight: 500;
+  font-display: swap;
 }
+*/
 
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
+@theme {
+  --color-bg: #0a0908;
+  --color-bg-elevated: #0d0b09;
+  --color-card-from: #ff4a1f;
+  --color-card-to: #ff6b2e;
+  --color-cta: #ff5228;
+  --color-cta-hover: #ff6b42;
+  --color-accent: #6b5ef5;
+  --color-accent-hover: #7e73f7;
+  --color-headline: #f5f3f0;
+  --color-body: #c9c5bf;
+  --color-muted: #8a8581;
+  --color-footer-dim: #6b6660;
+  --color-border: rgb(245 243 240 / 0.1);
+
+  --font-display: "FlechaM-Medium", var(--font-poppins), sans-serif;
+  --font-ui: var(--font-poppins), sans-serif;
+  --font-meta: var(--font-inter), sans-serif;
 }
 
 html {
-  background-color: var(--color-bg);
-  color: var(--color-ink);
-  font-family: var(--font-sans);
-  scroll-behavior: smooth;
+  color-scheme: dark;
 }
 
 body {
-  background-color: var(--color-bg);
-  color: var(--color-ink);
-  font-family: var(--font-sans);
-  font-size: var(--type-body);
-  line-height: 1.6;
-  overflow-x: hidden;
-}
-
-h1, h2, h3 {
-  font-family: var(--font-display);
-  line-height: 1.05;
-  color: var(--color-ink);
-}
-
-/* Eyebrow badge styling */
-.eyebrow {
-  font-family: var(--font-sans);
-  font-size: var(--type-eyebrow);
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.15em;
-  color: var(--color-ink-muted);
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.eyebrow::before {
-  content: '●';
-  color: var(--color-accent);
-}
-
-/* Section number tag */
-.section-tag {
-  font-family: var(--font-mono);
-  font-size: 0.75rem;
-  color: var(--color-ink-faint);
-}
-
-/* Horizontal rule */
-.hr-editorial {
-  border: none;
-  border-top: 1px solid var(--color-ink-faint);
-}
-
-/* Overflow hidden wrapper for SplitType line reveals */
-.reveal-wrap {
-  overflow: hidden;
-  display: block;
+  background: var(--color-bg);
+  color: var(--color-body);
+  font-family: var(--font-ui);
 }
 
 ::selection {
-  background: var(--color-accent);
-  color: var(--color-ink);
+  background: var(--color-cta);
+  color: var(--color-bg);
 }
 
 @media (prefers-reduced-motion: reduce) {
