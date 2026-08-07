@@ -7,14 +7,14 @@ import { useAuth } from "@/lib/auth-context";
 import GlassSurface from "./GlassSurface";
 
 const LINKS = [
-  { href: "#how-it-works", label: "How it works" },
-  { href: "#algorand", label: "Algorand" },
-  { href: "#pricing", label: "Pricing" },
+  { href: "/#how-it-works", label: "How it works" },
+  { href: "/#algorand", label: "Algorand" },
+  { href: "/#pricing", label: "Pricing" },
 ];
 
 export function Nav() {
   const [open, setOpen] = useState(false);
-  const { user, signInWithGoogle, configured } = useAuth();
+  const { user, signInWithGoogle, configured, authError } = useAuth();
 
   return (
     <header className="sticky top-0 z-50">
@@ -45,7 +45,7 @@ export function Nav() {
           ))}
         </nav>
 
-        <div className="hidden lg:block">
+        <div className="relative hidden lg:block">
           {user ? (
             <Link
               href="/dashboard"
@@ -61,6 +61,11 @@ export function Nav() {
             >
               Sign in
             </button>
+          )}
+          {authError && (
+            <div className="absolute right-0 top-full mt-2 w-64 rounded-xl border border-red-500/30 bg-[var(--color-bg-elevated)] p-3 text-xs text-red-300 shadow-lg">
+              {authError}
+            </div>
           )}
         </div>
 
