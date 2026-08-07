@@ -69,9 +69,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const auth = getFirebaseAuth();
     if (!auth) {
       if (typeof window !== "undefined") {
-        const savedEmail = localStorage.getItem("veldar:user_email");
-        const savedName = localStorage.getItem("veldar:user_name");
-        setUser(createMockUser(savedEmail ?? "vineet.mandhalkar@gmail.com", savedName ?? "vineet mandhalkar"));
+        const isSignedOut = localStorage.getItem("veldar:signed_out") === "true";
+        if (isSignedOut) {
+          setUser(null);
+        } else {
+          const savedEmail = localStorage.getItem("veldar:user_email");
+          const savedName = localStorage.getItem("veldar:user_name");
+          setUser(createMockUser(savedEmail ?? "vineet.mandhalkar@gmail.com", savedName ?? "vineet mandhalkar"));
+        }
       } else {
         setUser(createMockUser());
       }
@@ -90,11 +95,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (!active) return;
       if (u) {
         setUser(u);
+        if (typeof window !== "undefined") {
+          localStorage.removeItem("veldar:signed_out");
+        }
       } else {
-        // Fallback to default demo user if Firebase is not active
-        const savedEmail = localStorage.getItem("veldar:user_email");
-        const savedName = localStorage.getItem("veldar:user_name");
-        setUser(createMockUser(savedEmail ?? "vineet.mandhalkar@gmail.com", savedName ?? "vineet mandhalkar"));
+        const isSignedOut = typeof window !== "undefined" && localStorage.getItem("veldar:signed_out") === "true";
+        if (isSignedOut) {
+          setUser(null);
+        } else {
+          const savedEmail = typeof window !== "undefined" ? localStorage.getItem("veldar:user_email") : null;
+          const savedName = typeof window !== "undefined" ? localStorage.getItem("veldar:user_name") : null;
+          setUser(createMockUser(savedEmail ?? "vineet.mandhalkar@gmail.com", savedName ?? "vineet mandhalkar"));
+        }
       }
       setLoading(false);
     });
@@ -106,6 +118,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   async function signInWithGoogle() {
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("veldar:signed_out");
+    }
     const auth = getFirebaseAuth();
     if (!auth) {
       const mock = createMockUser("vineet.mandhalkar@gmail.com", "vineet mandhalkar");
@@ -130,6 +145,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   async function signInWithEmail(email: string, pass: string): Promise<boolean> {
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("veldar:signed_out");
+    }
     const auth = getFirebaseAuth();
     if (!auth) {
       const mock = createMockUser(email);
@@ -150,6 +168,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   async function signUpWithEmail(email: string, pass: string, name?: string): Promise<boolean> {
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("veldar:signed_out");
+    }
     const auth = getFirebaseAuth();
     if (!auth) {
       const mock = createMockUser(email, name);
@@ -188,13 +209,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   async function signOut() {
     const auth = getFirebaseAuth();
     if (auth) {
-      await firebaseSignOut(auth);
+      try {
+        await firebaseSignOut(auth);
+      } catch {}
     }
     if (typeof window !== "undefined") {
       localStorage.removeItem("veldar:user_email");
       localStorage.removeItem("veldar:user_name");
+      localStorage.setItem("veldar:signed_out", "true");
     }
-    setUser(createMockUser("vineet.mandhalkar@gmail.com", "vineet mandhalkar"));
+    setUser(null);
   }
 
   const getIdToken = useCallback(async () => {
