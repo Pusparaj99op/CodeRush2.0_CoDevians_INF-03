@@ -49,7 +49,7 @@ function AccountMenu() {
   }
 
   return (
-    <div ref={ref} className="relative flex items-center gap-3">
+    <div ref={ref} className="relative z-[100] flex items-center gap-3">
       <Link
         href="/dashboard"
         className="rounded-full bg-[var(--color-accent)] px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[var(--color-accent-hover)] active:scale-[0.98]"
@@ -62,41 +62,51 @@ function AccountMenu() {
         aria-haspopup="menu"
         aria-expanded={open}
         aria-label="Account menu"
-        className="flex items-center gap-1.5 rounded-full border border-[var(--color-border)] py-1 pl-1 pr-2 transition-colors hover:border-[var(--color-headline)]/30"
+        className="flex items-center gap-1.5 rounded-full border border-[var(--color-border)] bg-[var(--color-bg-elevated)] py-1 pl-1.5 pr-2.5 transition-colors hover:border-[var(--color-headline)]/40"
       >
-        <span className="grid h-7 w-7 place-items-center rounded-full bg-[var(--color-bg-elevated)] text-xs font-semibold text-[var(--color-headline)]">
+        <span className="grid h-7 w-7 place-items-center rounded-full bg-[var(--color-accent)] text-xs font-bold text-white shadow-sm">
           {initial}
         </span>
-        <CaretDown size={12} className="text-[var(--color-muted)]" />
+        <CaretDown size={14} className={`text-[var(--color-muted)] transition-transform duration-200 ${open ? "rotate-180 text-[var(--color-headline)]" : ""}`} />
       </button>
 
       {open && (
         <div
           role="menu"
-          className="absolute right-0 top-full z-50 mt-2 w-56 overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-elevated)] shadow-xl"
+          className="absolute right-0 top-full z-[9999] mt-3 w-60 overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[#12100e] p-1.5 shadow-2xl backdrop-blur-xl"
         >
           <div className="border-b border-[var(--color-border)] px-4 py-3">
-            <p className="truncate text-sm font-medium text-[var(--color-headline)]">{label}</p>
+            <p className="truncate text-sm font-semibold text-[var(--color-headline)]">{label}</p>
             {user.email && user.displayName && (
               <p className="truncate text-xs text-[var(--color-muted)]">{user.email}</p>
             )}
           </div>
-          <Link
-            href="/dashboard/settings"
-            role="menuitem"
-            onClick={() => setOpen(false)}
-            className="block px-4 py-2.5 text-sm text-[var(--color-body)] transition-colors hover:bg-white/5 hover:text-[var(--color-headline)]"
-          >
-            Settings
-          </Link>
-          <button
-            role="menuitem"
-            onClick={handleSignOut}
-            className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm text-[var(--color-body)] transition-colors hover:bg-white/5 hover:text-[var(--color-headline)]"
-          >
-            <SignOut size={15} />
-            Sign out
-          </button>
+          <div className="py-1">
+            <Link
+              href="/dashboard"
+              role="menuitem"
+              onClick={() => setOpen(false)}
+              className="block rounded-xl px-3.5 py-2.5 text-sm text-[var(--color-body)] transition-colors hover:bg-white/10 hover:text-[var(--color-headline)]"
+            >
+              Dashboard
+            </Link>
+            <Link
+              href="/dashboard/settings"
+              role="menuitem"
+              onClick={() => setOpen(false)}
+              className="block rounded-xl px-3.5 py-2.5 text-sm text-[var(--color-body)] transition-colors hover:bg-white/10 hover:text-[var(--color-headline)]"
+            >
+              Settings
+            </Link>
+            <button
+              role="menuitem"
+              onClick={handleSignOut}
+              className="flex w-full items-center gap-2.5 rounded-xl px-3.5 py-2.5 text-left text-sm font-medium text-red-400 transition-colors hover:bg-red-500/15 hover:text-red-300"
+            >
+              <SignOut size={16} />
+              Sign out
+            </button>
+          </div>
         </div>
       )}
     </div>
@@ -110,7 +120,7 @@ export function Nav() {
   const router = useRouter();
 
   return (
-    <header className="sticky top-0 z-50">
+    <header className="sticky top-0 z-[100] w-full">
       <GlassSurface
         width="100%"
         height={64}
@@ -119,7 +129,7 @@ export function Nav() {
         saturation={1.3}
         blur={14}
         distortionScale={-60}
-        className="glass-surface--nav border-b border-[var(--color-border)]"
+        className="glass-surface--nav border-b border-[var(--color-border)] relative z-[100]"
       >
       <div className="w-full mx-auto flex h-16 max-w-7xl items-center justify-between px-6 lg:px-8">
         <Link href="/" className="shrink-0 mr-6 lg:mr-10 font-[family-name:var(--font-display)] text-lg font-semibold tracking-tight text-[var(--color-headline)]">
@@ -142,7 +152,7 @@ export function Nav() {
           ))}
         </nav>
 
-        <div className="relative hidden lg:block">
+        <div className="relative z-[100] hidden lg:block">
           {user ? (
             <AccountMenu />
           ) : (
@@ -162,7 +172,7 @@ export function Nav() {
             </div>
           )}
           {authError && (
-            <div className="absolute right-0 top-full mt-2 w-64 rounded-xl border border-red-500/30 bg-[var(--color-bg-elevated)] p-3 text-xs text-red-300 shadow-lg">
+            <div className="absolute right-0 top-full z-[9999] mt-2 w-64 rounded-xl border border-red-500/30 bg-[var(--color-bg-elevated)] p-3 text-xs text-red-300 shadow-lg">
               {authError}
             </div>
           )}

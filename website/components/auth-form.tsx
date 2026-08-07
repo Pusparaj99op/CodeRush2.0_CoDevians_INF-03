@@ -4,6 +4,7 @@
 // two differ only in a name field, the submit handler, and the copy —
 // keeping them together stops the two pages from drifting apart.
 
+import { SignOut } from "@phosphor-icons/react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -33,6 +34,7 @@ export function AuthForm({ mode }: { mode: "signin" | "signup" }) {
     signInWithGoogle,
     signInWithEmail,
     signUpWithEmail,
+    signOut,
   } = useAuth();
 
   const [name, setName] = useState("");
@@ -79,6 +81,29 @@ export function AuthForm({ mode }: { mode: "signin" | "signup" }) {
           ? "Run agent workflows and watch every offer, approval, and receipt."
           : "Sign in to your dashboard and workflow traces."}
       </p>
+
+      {user && (
+        <div className="mt-6 rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg-elevated)] p-4 shadow-md">
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0 flex-1">
+              <p className="text-xs text-[var(--color-muted)]">Signed in as</p>
+              <p className="truncate text-sm font-semibold text-[var(--color-headline)]">
+                {user.displayName || user.email}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={async () => {
+                await signOut();
+              }}
+              className="flex shrink-0 items-center gap-1.5 rounded-xl border border-red-500/30 bg-red-500/10 px-3.5 py-2 text-xs font-semibold text-red-300 transition-colors hover:bg-red-500/20"
+            >
+              <SignOut size={14} />
+              Sign out
+            </button>
+          </div>
+        </div>
+      )}
 
       {!configured && (
         <p className="mt-6 rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-200">
