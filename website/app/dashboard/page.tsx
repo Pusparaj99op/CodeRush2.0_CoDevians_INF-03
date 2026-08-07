@@ -5,12 +5,13 @@
 // walkthrough (Doc/specs/02-website.md). Talks directly to the
 // orchestrator API routes already implemented under app/api/**.
 
-import { ArrowUpRight, CheckCircle } from "@phosphor-icons/react";
+import { ArrowUpRight, CheckCircle, Wallet } from "@phosphor-icons/react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { DashboardShell } from "@/components/dashboard-shell";
 import { authedFetch } from "@/lib/api-client";
 import { useAuth } from "@/lib/auth-context";
+import { connectLuteWallet, signPaymentWithLute } from "@/lib/lute-wallet";
 import type { LedgerEvent, Tier, Workflow } from "@/lib/types";
 
 export default function Dashboard() {
@@ -186,16 +187,35 @@ function WorkflowPanel() {
     return () => clearInterval(timer);
   }, [workflow, pendingApproval]);
 
-  async function approve(decision: "approved" | "denied") {
+  async function approve(decision: "approved" | "denied", useLute = false) {
     if (!workflow || !pendingApproval) return;
     setApproving(decision);
-    const approvalId = pendingApproval.detail.approvalId as string;
-    await authedFetch(`/api/workflows/${workflow.id}/approve`, {
-      method: "POST",
-      body: JSON.stringify({ approvalId, decision }),
-    });
-    await refresh(workflow.id);
-    setApproving(null);
+    try {
+      const approvalId = pendingApproval.detail.approvalId as string;
+      let luteTxnHash: string | undefined;
+
+      if (decision === "approved" && useLute) {
+        const savedLuteAddr = typeof window !== "undefined" ? localStorage.getItem("veldar:lute_address") : null;
+        const luteAddr = savedLuteAddr ?? (await connectLuteWallet());
+        const amountAlgo = (pendingApproval.detail.amountAlgo as number) ?? 1.0;
+        const result = await signPaymentWithLute(
+          luteAddr,
+          "MOCKPAYEEADDRESS234567890123456789012345678901234567890",
+          amountAlgo
+        );
+        luteTxnHash = result.txnHash;
+      }
+
+      await authedFetch(`/api/workflows/${workflow.id}/approve`, {
+        method: "POST",
+        body: JSON.stringify({ approvalId, decision, luteTxnHash }),
+      });
+      await refresh(workflow.id);
+    } catch (err) {
+      alert(`Lute Wallet Approval Error: ${(err as Error).message}`);
+    } finally {
+      setApproving(null);
+    }
   }
 
   if (!workflow) {
@@ -228,18 +248,26 @@ function WorkflowPanel() {
             <ArrowUpRight size={14} />
           </Link>
           {pendingApproval && (
-            <div className="flex gap-2">
+            <div className="flex items-center gap-2">
               <button
                 onClick={() => approve("denied")}
                 disabled={approving !== null}
-                className="rounded-full border border-[var(--color-border)] px-4 py-2 text-xs font-semibold text-[var(--color-headline)] transition-colors hover:bg-white/10 disabled:opacity-50"
+                className="rounded-full border border-[var(--color-border)] px-3.5 py-1.5 text-xs font-semibold text-[var(--color-headline)] transition-colors hover:bg-white/10 disabled:opacity-50"
               >
                 Deny
               </button>
               <button
+                onClick={() => approve("approved", true)}
+                disabled={approving !== null}
+                className="flex items-center gap-1.5 rounded-full border border-emerald-500/40 bg-emerald-500/15 px-3.5 py-1.5 text-xs font-semibold text-emerald-300 transition-colors hover:bg-emerald-500/25 disabled:opacity-50"
+              >
+                <Wallet size={13} className="text-emerald-400" />
+                <span>Approve with Lute</span>
+              </button>
+              <button
                 onClick={() => approve("approved")}
                 disabled={approving !== null}
-                className="rounded-full bg-[var(--color-cta)] px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-[var(--color-cta-hover)] disabled:opacity-50"
+                className="rounded-full bg-[var(--color-cta)] px-4 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-[var(--color-cta-hover)] disabled:opacity-50"
               >
                 Approve {(pendingApproval.detail.amountAlgo as number) ?? ""} ALGO
               </button>

@@ -7,6 +7,8 @@ import { useEffect, useRef, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 import GlassSurface from "./GlassSurface";
 
+import { LuteWalletButton } from "./lute-wallet-button";
+
 const LINKS = [
   { href: "/product", label: "Product" },
   { href: "/algorand", label: "Algorand" },
@@ -50,9 +52,11 @@ function AccountMenu() {
 
   return (
     <div ref={ref} className="relative z-[100] flex items-center gap-3">
+      <LuteWalletButton />
+
       <Link
         href="/dashboard"
-        className="rounded-full bg-[var(--color-accent)] px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[var(--color-accent-hover)] active:scale-[0.98]"
+        className="rounded-full bg-[var(--color-accent)] px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-[var(--color-accent-hover)] active:scale-[0.98]"
       >
         Dashboard
       </Link>

@@ -16,6 +16,7 @@
     "firebase": "^10.14.1",
     "firebase-admin": "^14.2.0",
     "gsap": "^3.12.5",
+    "lute-connect": "^2.0.1",
     "motion": "^11.5.4",
     "next": "^14.2.5",
     "ogl": "^1.0.11",
