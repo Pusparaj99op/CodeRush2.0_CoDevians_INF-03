@@ -1,9 +1,15 @@
-import { ArrowRight, Check, Star } from "@phosphor-icons/react/dist/ssr";
+"use client";
+
+import { ArrowRight, Check, Star } from "@phosphor-icons/react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { TIERS, tierCapLabel, tierCutLabel } from "@/lib/content";
 import { Reveal } from "./reveal";
+import SpecularButton from "./SpecularButton";
 
 export function Pricing() {
+  const router = useRouter();
+
   return (
     <section id="pricing" className="relative z-10 py-24 lg:py-32">
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
@@ -35,7 +41,7 @@ export function Pricing() {
               >
                 {tier.featured && (
                   <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
-                    <span className="veldar-badge-accent shadow-md text-[11px] font-semibold">
+                    <span className="veldar-badge-accent shadow-md text-[11px] font-semibold flex items-center gap-1">
                       <Star size={12} weight="fill" />
                       Most Popular
                     </span>
@@ -68,16 +74,19 @@ export function Pricing() {
                 </div>
 
                 <div className="mt-8 pt-4">
-                  <Link
-                    href="/dashboard"
-                    className={`w-full py-3.5 text-sm font-semibold text-center ${
-                      tier.featured
-                        ? "btn-spectacular"
-                        : "btn-secondary"
-                    }`}
+                  <SpecularButton
+                    onClick={() => router.push(`/dashboard?tier=${tier.tier}`)}
+                    size="md"
+                    radius={9999}
+                    tint="#ff5228"
+                    tintOpacity={tier.featured ? 0.2 : 0.08}
+                    lineColor="#ff7a59"
+                    baseColor="#ff5228"
+                    autoAnimate={tier.featured}
+                    className="w-full"
                   >
                     Choose {tier.name}
-                  </Link>
+                  </SpecularButton>
                 </div>
               </div>
             </Reveal>

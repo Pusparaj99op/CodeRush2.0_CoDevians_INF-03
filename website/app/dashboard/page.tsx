@@ -425,10 +425,17 @@ function TravelForm({ onWorkflowSubmit }: { onWorkflowSubmit?: (goal: string) =>
 
         {error && <p className="text-xs text-red-400">{error}</p>}
 
-        <button
+        <SpecularButton
           type="submit"
           disabled={submitting}
-          className="mt-1 flex items-center justify-center gap-2 rounded-full bg-[var(--color-cta)] px-5 py-3 text-sm font-semibold text-white transition-all hover:bg-[var(--color-cta-hover)] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
+          size="lg"
+          radius={9999}
+          tint="#ff5228"
+          tintOpacity={0.15}
+          lineColor="#ff7a59"
+          baseColor="#ff5228"
+          autoAnimate={true}
+          className="w-full mt-1"
         >
           {submitting ? (
             <>
@@ -441,7 +448,7 @@ function TravelForm({ onWorkflowSubmit }: { onWorkflowSubmit?: (goal: string) =>
               <span>Launch Travel Agent Workflow</span>
             </>
           )}
-        </button>
+        </SpecularButton>
       </form>
 
       {/* Travel Web3 Features Status Card */}
@@ -627,10 +634,17 @@ function EcommerceForm() {
 
         {error && <p className="text-xs text-red-400">{error}</p>}
 
-        <button
+        <SpecularButton
           type="submit"
           disabled={submitting}
-          className="mt-1 flex items-center justify-center gap-2 rounded-full bg-sky-500 px-5 py-3 text-sm font-semibold text-white transition-all hover:bg-sky-400 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
+          size="lg"
+          radius={9999}
+          tint="#0284c7"
+          tintOpacity={0.15}
+          lineColor="#38bdf8"
+          baseColor="#0284c7"
+          autoAnimate={true}
+          className="w-full mt-1"
         >
           {submitting ? (
             <>
@@ -643,7 +657,7 @@ function EcommerceForm() {
               <span>Start E-Commerce Procurement</span>
             </>
           )}
-        </button>
+        </SpecularButton>
       </form>
 
       {/* E-Commerce Web3 Primitives Status Card */}
