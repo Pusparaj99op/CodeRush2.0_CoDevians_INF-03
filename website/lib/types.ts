@@ -61,6 +61,13 @@ export interface WorkflowStep {
   /** What the provider returned, once the step is paid. Feeds the next
    *  step's input so the pipeline is a real chain. */
   output?: string;
+  /**
+   * Optional steps may be skipped — by a false runtime condition, by budget
+   * shaping, or by the user denying their approval — without failing the
+   * workflow. Absent on documents written before travel compilation existed,
+   * which therefore read as core.
+   */
+  optional?: boolean;
 }
 
 export type WorkflowStatus = "planning" | "running" | "cancelled" | "completed" | "failed";

@@ -12,6 +12,8 @@
 
 import { NextResponse, type NextRequest } from "next/server";
 import { getAdminAuth, isAdminConfigured } from "./firebase-admin";
+import { store } from "./store";
+import type { Workflow } from "./types";
 
 export type AuthResult =
   | { ok: true; userId: string; verified: boolean }
@@ -65,4 +67,38 @@ export async function requireUser(req: NextRequest): Promise<AuthResult> {
   } catch (err) {
     return unauthorized(`invalid ID token: ${(err as Error).message}`);
   }
+}
+
+export type OwnedWorkflowResult =
+  | { ok: true; userId: string; verified: boolean; workflow: Workflow }
+  | { ok: false; response: NextResponse };
+
+/**
+ * Authenticates the caller and loads a workflow they own.
+ *
+ * Until this existed, every `/api/workflows/[id]/*` route read the workflow
+ * straight out of the store with no auth at all — anyone holding an id could
+ * read someone else's trip, approve their payments, or cancel their booking.
+ *
+ * A workflow owned by someone else returns **404, not 403**: a 403 would
+ * confirm the id exists, which turns the endpoint into an oracle for probing
+ * the id space. From outside, "not yours" and "not there" must be
+ * indistinguishable.
+ */
+export async function requireOwnedWorkflow(
+  req: NextRequest,
+  workflowId: string
+): Promise<OwnedWorkflowResult> {
+  const auth = await requireUser(req);
+  if (!auth.ok) return auth;
+
+  const workflow = await store.getWorkflow(workflowId);
+  if (!workflow || workflow.userId !== auth.userId) {
+    return {
+      ok: false,
+      response: NextResponse.json({ error: "workflow not found" }, { status: 404 }),
+    };
+  }
+
+  return { ok: true, userId: auth.userId, verified: auth.verified, workflow };
 }

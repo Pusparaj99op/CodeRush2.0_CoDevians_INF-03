@@ -15,6 +15,11 @@ import { getProvider, PROVIDERS } from "./providers";
 import { callProvider, ProviderError } from "./provider-client";
 import { settlementMode } from "./settlement-mode";
 import { store } from "./store";
+import { buildTravelPlan } from "./travel/compiler";
+import type { StepKey, TravelPlan } from "./travel/compiler";
+import { parseTravelGoal } from "./travel/goal-parser";
+import { readMeta } from "./travel/mock-fulfillment";
+import type { StepMeta } from "./travel/mock-fulfillment";
 import { TIER_CAPS } from "./types";
 import type {
   Approval,
@@ -51,26 +56,13 @@ export async function compileWorkflow(
 ): Promise<Workflow> {
   const workflowId = newId("wf");
 
-  // All providers participate, including the laptop's local-inference step.
-  // It used to be filtered out here, which meant the one real paid provider
-  // in the marketplace was never actually part of any workflow.
-  const steps: WorkflowStep[] = PROVIDERS.map((provider, i) => ({
-    id: newId("step"),
-    providerId: provider.id,
-    description: `${provider.capability} via ${provider.name}`,
-    condition: i === 0 ? undefined : "runs only if the prior step's output needs verification",
-    dependsOn: [],
-    status: "pending",
-    quotedPriceAlgo: null,
-    settledPriceAlgo: null,
-    receiptId: null,
-  }));
-  // wire dependsOn now that ids exist
-  for (let i = 1; i < steps.length; i++) {
-    const prev = steps[i - 1];
-    const cur = steps[i];
-    if (prev && cur) cur.dependsOn = [prev.id];
-  }
+  const intent = parseTravelGoal(goal);
+  const plan = buildTravelPlan(intent, budgetAlgo);
+
+  const steps: WorkflowStep[] =
+    plan.steps.length > 0
+      ? compileTravelSteps(plan)
+      : compileLegacyPipeline();
 
   const workflow: Workflow = {
     id: workflowId,
@@ -92,6 +84,13 @@ export async function compileWorkflow(
     tier,
     stepCount: steps.length,
     settlementMode: settlementMode(),
+    // Carried on the existing event rather than a new LedgerEventType, so the
+    // clients' event enums stay an exact mirror of the 13 that already exist.
+    // This is what lets the app say "skipped travel insurance to stay inside
+    // your budget" instead of silently showing one fewer step.
+    intent: plan.steps.length > 0 ? intent : null,
+    droppedSteps: plan.dropped,
+    projectedAlgo: plan.projectedAlgo,
   });
 
   for (const step of steps) {
@@ -110,6 +109,142 @@ export async function compileWorkflow(
   }
 
   return workflow;
+}
+
+/**
+ * Allocates step ids and resolves the plan's key references.
+ *
+ * The two passes matter: every id must exist before any `dependsOnKeys` is
+ * looked up. Resolving as we go would leave later keys unresolved, and since
+ * `[].every(...)` is true, a step with a silently emptied `dependsOn` looks
+ * immediately runnable — the workflow would pay for the hotel before the
+ * flight, and nothing would report an error.
+ */
+function compileTravelSteps(plan: TravelPlan): WorkflowStep[] {
+  const ids = new Map<StepKey, string>();
+  for (const planned of plan.steps) {
+    ids.set(planned.key, newId("step"));
+  }
+
+  return plan.steps.map((planned) => ({
+    id: ids.get(planned.key)!,
+    providerId: planned.providerId,
+    description: planned.description,
+    condition: planned.condition,
+    dependsOn: planned.dependsOnKeys.map((k) => ids.get(k)!).filter(Boolean),
+    status: "pending" as const,
+    quotedPriceAlgo: null,
+    settledPriceAlgo: null,
+    receiptId: null,
+    optional: planned.optional,
+  }));
+}
+
+/**
+ * The original fixed translate -> fact-check -> local-inference pipeline, used
+ * when the goal does not read as travel at all. Keeping it means a non-travel
+ * goal still demonstrates the payment mechanics rather than failing to compile.
+ */
+function compileLegacyPipeline(): WorkflowStep[] {
+  const legacy = PROVIDERS.filter((p) =>
+    ["translate-api", "fact-check-api", "laptop-inference"].includes(p.id),
+  );
+
+  const steps: WorkflowStep[] = legacy.map((provider, i) => ({
+    id: newId("step"),
+    providerId: provider.id,
+    description: `${provider.capability} via ${provider.name}`,
+    condition: i === 0 ? undefined : "runs only if the prior step's output needs verification",
+    dependsOn: [],
+    status: "pending" as const,
+    quotedPriceAlgo: null,
+    settledPriceAlgo: null,
+    receiptId: null,
+    optional: false,
+  }));
+
+  for (let i = 1; i < steps.length; i++) {
+    const prev = steps[i - 1];
+    const cur = steps[i];
+    if (prev && cur) cur.dependsOn = [prev.id];
+  }
+  return steps;
+}
+
+/**
+ * Decides whether a step's conditional edge is satisfied, from the machine
+ * readable header its dependencies wrote.
+ *
+ * Pure over the workflow it is given. A step with no condition, or whose
+ * dependencies produced no readable signal, always runs — absence of evidence
+ * must not silently cancel a booking the user is waiting for.
+ */
+export function evaluateCondition(
+  workflow: Workflow,
+  step: WorkflowStep,
+): { run: boolean; reason?: string } {
+  const metaOf = (providerId: string): StepMeta | null => {
+    const dep = workflow.steps.find(
+      (s) => step.dependsOn.includes(s.id) && s.providerId === providerId,
+    );
+    return readMeta(dep?.output);
+  };
+
+  switch (step.providerId) {
+    case "flight-booking": {
+      const search = metaOf("flight-search");
+      if (!search) return { run: true };
+      if (!search.found) {
+        return { run: false, reason: "no fare was found within the budget" };
+      }
+      const price = typeof search.priceAlgo === "number" ? search.priceAlgo : 0;
+      if (workflow.spentAlgo + price > workflow.budgetAlgo) {
+        return { run: false, reason: "the fare no longer fits the remaining budget" };
+      }
+      return { run: true };
+    }
+
+    case "hotel-booking": {
+      const search = metaOf("hotel-search");
+      if (!search) return { run: true };
+      if (!search.found) {
+        return { run: false, reason: "no room was available for those dates" };
+      }
+      return { run: true };
+    }
+
+    case "ground-transfer": {
+      const flight = metaOf("flight-booking");
+      if (!flight || typeof flight.departHour !== "number") return { run: true };
+      const hour = flight.departHour;
+      // Airport transit runs 06:00-22:00; outside that a transfer is the only
+      // way in, so this is exactly when the optional step earns its cost.
+      if (hour >= 6 && hour < 22) {
+        return { run: false, reason: "the arrival falls inside airport transit hours" };
+      }
+      return { run: true };
+    }
+
+    default:
+      return { run: true };
+  }
+}
+
+/** Marks a step skipped and records why, without inventing a new event type. */
+async function skipStep(
+  workflow: Workflow,
+  step: WorkflowStep,
+  reason: string,
+): Promise<void> {
+  step.status = "skipped";
+  workflow.updatedAt = nowIso();
+  await store.saveWorkflow(workflow);
+  await logEvent(
+    workflow.id,
+    "provider_result",
+    { providerId: step.providerId, skipped: true, reason },
+    step.id,
+  );
 }
 
 export interface QuoteResult {
@@ -131,11 +266,22 @@ export async function quoteStep(workflow: Workflow, step: WorkflowStep): Promise
     return { ok: false, reason: "unknown provider", requiresApproval: false };
   }
 
-  const dependenciesMet = step.dependsOn.every(
-    (depId) => workflow.steps.find((s) => s.id === depId)?.status === "fulfilled"
-  );
+  // "skipped" counts as met. A skipped optional step is a resolved dependency,
+  // not a pending one — treating it as unmet deadlocks everything downstream.
+  const dependenciesMet = step.dependsOn.every((depId) => {
+    const status = workflow.steps.find((s) => s.id === depId)?.status;
+    return status === "fulfilled" || status === "skipped";
+  });
   if (!dependenciesMet) {
     return { ok: false, reason: "dependencies not yet fulfilled", requiresApproval: false };
+  }
+
+  // Checked before quoting: a step whose condition is false must not appear in
+  // the trace as a quote the user might think they were charged for.
+  const condition = evaluateCondition(workflow, step);
+  if (!condition.run) {
+    await skipStep(workflow, step, condition.reason ?? "condition not met");
+    return { ok: false, reason: "condition not met", requiresApproval: false };
   }
 
   step.quotedPriceAlgo = provider.priceAlgo;
@@ -203,8 +349,16 @@ export async function decideApproval(
   const workflow = await store.getWorkflow(approval.workflowId);
   const step = workflow?.steps.find((s) => s.id === approval.stepId);
   if (workflow && step) {
-    step.status = decision === "approved" ? "paying" : "cancelled";
-    if (decision === "denied") workflow.status = "cancelled";
+    if (decision === "approved") {
+      step.status = "paying";
+    } else if (step.optional) {
+      // Declining an optional extra must not kill the trip. Saying no to travel
+      // insurance should leave the flight and hotel booked, not cancel both.
+      step.status = "skipped";
+    } else {
+      step.status = "cancelled";
+      workflow.status = "cancelled";
+    }
     workflow.updatedAt = nowIso();
     await store.saveWorkflow(workflow);
     await logEvent(workflow.id, "approval_decided", { approvalId: approval.id, decision }, step.id);
@@ -252,6 +406,7 @@ export async function executeStep(
       stepId: step.id,
       task: provider.capability,
       input,
+      remainingBudgetAlgo: workflow.budgetAlgo - workflow.spentAlgo,
     });
   } catch (err) {
     const retryable = err instanceof ProviderError ? err.retryable : false;
@@ -359,23 +514,68 @@ export async function verifyFulfillment(
  * Stops at the first approval request, failure, or completion.
  */
 export async function advanceWorkflow(workflow: Workflow): Promise<Workflow> {
-  // Bounded so a bug can't spin: at most one pass per step.
-  for (let i = 0; i < workflow.steps.length; i++) {
+  // Bounded so a bug can't spin. Twice the step count, because a travel plan is
+  // a diamond (flight and hotel search run in parallel) and a step can be
+  // visited once to skip and once to run.
+  for (let i = 0; i < workflow.steps.length * 2; i++) {
     if (workflow.status !== "running") break;
 
-    const next = workflow.steps.find((s) => s.status === "pending" || s.status === "paying");
+    // Pick the first step that is genuinely runnable rather than the first
+    // pending one. The old version stopped at the head of the list, so with a
+    // parallel branch it stalled on a step whose dependency was still queued.
+    const next =
+      workflow.steps.find((s) => s.status === "paying") ??
+      workflow.steps.find(
+        (s) =>
+          s.status === "pending" &&
+          s.dependsOn.every((depId) => {
+            const status = workflow.steps.find((d) => d.id === depId)?.status;
+            return status === "fulfilled" || status === "skipped";
+          }),
+      );
     if (!next) break;
 
     if (next.status === "pending") {
       const quote = await quoteStep(workflow, next);
-      if (!quote.ok || quote.requiresApproval) break;
+      // A skipped step is progress, not a stop: keep going so the rest of the
+      // plan still runs. quoteStep mutates `next` in place, so the reason code
+      // is what distinguishes a skip from a real failure.
+      if (!quote.ok) {
+        if (quote.reason === "condition not met") continue;
+        break;
+      }
+      // An approval blocks that step's branch, not the whole run. Stopping
+      // outright would leave an independent hotel search queued behind an
+      // unrelated decision about a flight — so keep going and let the user
+      // decide everything that is ready at once. The step is now
+      // `awaiting_approval`, so the selector will not pick it up again.
+      if (quote.requiresApproval) continue;
     }
 
     const executed = await executeStep(workflow, next);
     if (!executed.ok) break;
   }
 
+  // A run that ends on a skip never reaches verifyFulfillment, which is where
+  // completion is normally detected — so check here too, or a trip whose last
+  // step was skipped would sit at "running" forever.
+  await settleCompletion(workflow);
+
   return workflow;
+}
+
+/** Marks a workflow completed once every step is fulfilled or skipped. */
+async function settleCompletion(workflow: Workflow): Promise<void> {
+  if (workflow.status !== "running") return;
+  const done = workflow.steps.every(
+    (s) => s.status === "fulfilled" || s.status === "skipped",
+  );
+  if (!done) return;
+
+  workflow.status = "completed";
+  workflow.updatedAt = nowIso();
+  await store.saveWorkflow(workflow);
+  await logEvent(workflow.id, "workflow_completed", { spentAlgo: workflow.spentAlgo });
 }
 
 export async function cancelWorkflow(
