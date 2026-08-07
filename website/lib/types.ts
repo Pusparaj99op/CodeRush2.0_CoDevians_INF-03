@@ -97,7 +97,7 @@ export interface Approval {
   decidedAt: string | null;
 }
 
-export type SupportedChain = "algorand" | "stellar";
+export type SupportedChain = "algorand" | "stellar" | "ethereum";
 
 export interface Receipt {
   id: string;

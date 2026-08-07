@@ -8,7 +8,7 @@ import { useAuth } from "@/lib/auth-context";
 import GlassSurface from "./GlassSurface";
 
 import { LogoLink } from "./logo";
-import { MultiWalletBar } from "./multi-wallet-bar";
+import { WalletDropdown } from "./wallet-dropdown";
 
 const LINKS = [
   { href: "/product", label: "Product" },
@@ -55,7 +55,7 @@ function AccountMenu() {
 
   return (
     <div ref={ref} className="relative z-[100] flex items-center gap-3">
-      <MultiWalletBar />
+      <WalletDropdown />
 
       <Link
         href="/dashboard"

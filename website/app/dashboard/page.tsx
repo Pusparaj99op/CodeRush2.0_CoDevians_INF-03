@@ -32,6 +32,7 @@ import { UrlProductScanner } from "@/components/url-product-scanner";
 import { useAuth } from "@/lib/auth-context";
 import { connectLuteWallet, signPaymentWithLute } from "@/lib/lute-wallet";
 import { connectFreighterWallet, signPaymentWithFreighter } from "@/lib/freighter-wallet";
+import { connectMetaMask, signPaymentWithMetaMask } from "@/lib/metamask-wallet";
 import type { LedgerEvent, SupportedChain, Tier, Workflow, WorkflowStep } from "@/lib/types";
 
 const PRESET_GOALS = [
@@ -197,6 +198,7 @@ function WorkflowForm() {
             >
               <option value="algorand">Algorand (Lute)</option>
               <option value="stellar">Stellar (Freight)</option>
+              <option value="ethereum">Ethereum Sepolia (MetaMask)</option>
             </select>
           </div>
         </div>
@@ -323,7 +325,7 @@ function WorkflowPanel() {
 
   const [approvalError, setApprovalError] = useState<string | null>(null);
 
-  async function approve(decision: "approved" | "denied", walletType: "lute" | "freighter" | "server" = "server") {
+  async function approve(decision: "approved" | "denied", walletType: "lute" | "freighter" | "metamask" | "server" = "server") {
     if (!workflow || !pendingApproval) return;
     setApproving(decision);
     setApprovalError(null);
@@ -359,6 +361,21 @@ function WorkflowPanel() {
           luteTxnHash = result.txnHash;
         } catch (freighterErr) {
           setApprovalError((freighterErr as Error).message);
+          return;
+        }
+      } else if (decision === "approved" && walletType === "metamask") {
+        try {
+          const savedAddr = typeof window !== "undefined" ? localStorage.getItem("veldar:metamask_address") : null;
+          const conn = savedAddr ? { address: savedAddr } : await connectMetaMask();
+          const amountEth = (pendingApproval.detail.amountAlgo as number) ?? 0.05;
+          const result = await signPaymentWithMetaMask(
+            conn.address,
+            "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+            amountEth
+          );
+          luteTxnHash = result.txnHash;
+        } catch (metaMaskErr) {
+          setApprovalError((metaMaskErr as Error).message);
           return;
         }
       }
@@ -489,6 +506,15 @@ function WorkflowPanel() {
           )}
 
           <div className="mt-1 flex flex-wrap items-center gap-2">
+            <button
+              onClick={() => approve("approved", "metamask")}
+              disabled={approving !== null}
+              className="flex items-center gap-2 rounded-full border border-amber-500/50 bg-amber-500/20 px-4 py-2 text-xs font-semibold text-amber-300 transition-colors hover:bg-amber-500/30 disabled:opacity-50"
+            >
+              <Lightning size={14} className="text-amber-400" />
+              <span>{approving === "approved" ? "Signing..." : "Approve with MetaMask"}</span>
+            </button>
+
             <button
               onClick={() => approve("approved", "freighter")}
               disabled={approving !== null}
