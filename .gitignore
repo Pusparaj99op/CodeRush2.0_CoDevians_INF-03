@@ -5,7 +5,7 @@ website/node_modules
 website/.next
 website/next-env.d.ts
 website/.env*.local
-website/.env
+# website/.env
 website/.claude
 
 # laptop-server
