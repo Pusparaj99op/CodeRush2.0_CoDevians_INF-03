@@ -3,6 +3,7 @@ import { Poppins, Inter, Playfair_Display } from "next/font/google";
 import "./globals.css";
 import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/site";
 import { Providers } from "./providers";
+import { ChatBot } from "@/components/chatbot";
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -53,6 +54,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" className={`${poppins.variable} ${inter.variable} ${playfair.variable}`} data-theme="dark">
       <body className="font-poppins bg-[#0a0908] text-[#c9c5bf] antialiased">
         <Providers>{children}</Providers>
+        <ChatBot />
       </body>
     </html>
   );

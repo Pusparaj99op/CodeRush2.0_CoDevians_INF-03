@@ -7,7 +7,6 @@ import { LivePaymentTicker } from "@/components/live-payment-ticker";
 import { MarketplaceGlimpse } from "@/components/marketplace-glimpse";
 import { Nav } from "@/components/nav";
 import { Pricing } from "@/components/pricing";
-import { TrustBar } from "@/components/trust-bar";
 
 export default function Home() {
   return (
@@ -18,7 +17,6 @@ export default function Home() {
       <Nav />
       <main className="relative z-10">
         <Hero />
-        <TrustBar />
         <HowItWorks />
         <LivePaymentTicker />
         <MarketplaceGlimpse />

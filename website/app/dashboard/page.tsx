@@ -57,6 +57,12 @@ import { connectLuteWallet, signPaymentWithLute } from "@/lib/lute-wallet";
 import { connectFreighterWallet, signPaymentWithFreighter } from "@/lib/freighter-wallet";
 import { connectMetaMask, signPaymentWithMetaMask } from "@/lib/metamask-wallet";
 import type { LedgerEvent, SupportedChain, Tier, Workflow, WorkflowStep } from "@/lib/types";
+import { CurrencyConverter } from "@/components/currency-converter";
+import { TravelRiskPanel } from "@/components/travel-risk-panel";
+import { AgentNegotiationPanel } from "@/components/agent-negotiation";
+import { SessionKeyPolicy } from "@/components/session-key-policy";
+import { PackageTracker } from "@/components/package-tracker";
+import { InvoiceSettlement } from "@/components/invoice-settlement";
 
 const TRAVEL_PRESETS = [
   {
@@ -390,6 +396,9 @@ function TravelForm({ onWorkflowSubmit }: { onWorkflowSubmit?: (goal: string) =>
           />
         </div>
 
+        {/* Live Travel Risk Panel */}
+        <TravelRiskPanel destination={goal} />
+
         <div className="grid grid-cols-2 gap-3">
           <div className="flex flex-col gap-2">
             <label htmlFor="travel-budget" className="text-xs font-semibold text-[var(--color-headline)]">
@@ -422,6 +431,9 @@ function TravelForm({ onWorkflowSubmit }: { onWorkflowSubmit?: (goal: string) =>
             </select>
           </div>
         </div>
+
+        {/* Live Currency Converter */}
+        <CurrencyConverter amount={budget} base="algorand" label={`${budget} ALGO in real money`} />
 
         {error && <p className="text-xs text-red-400">{error}</p>}
 
@@ -518,6 +530,12 @@ function TravelForm({ onWorkflowSubmit }: { onWorkflowSubmit?: (goal: string) =>
           })}
         </div>
       </div>
+
+      {/* Session Key Spending Policy */}
+      <SessionKeyPolicy />
+
+      {/* B2B Invoice Settlement */}
+      <InvoiceSettlement />
     </div>
   );
 }
@@ -527,15 +545,22 @@ function EcommerceForm() {
     "Procure product from URL (https://apple.com/iphone-15-pro): Apple iPhone 15 Pro Max 256GB from Apple Store"
   );
   const [budget, setBudget] = useState(0.5);
-  const [tier, setTier] = useState<Tier>("free");
   const [chain, setChain] = useState<SupportedChain>("algorand");
+  const [tier] = useState<Tier>("free");
+  const [quantity, setQuantity] = useState(1);
+  const [priorityShipping, setPriorityShipping] = useState(false);
+  const [compareSuppliers, setCompareSuppliers] = useState(true);
+  const [coupon, setCoupon] = useState("");
+  const [couponApplied, setCouponApplied] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [workflowSubmitted, setWorkflowSubmitted] = useState(false);
+  const [activePreset, setActivePreset] = useState<string | null>(null);
 
-  // Extract product name from goal
   const productName = goal.match(/:\s*(.+)/)?.[1]?.trim() ?? goal.split(" ").slice(0, 6).join(" ");
   const basePrice = budget > 0.8 ? 1199 : budget > 0.4 ? 599 : 199;
+  const budgetUsedPct = Math.min(100, (budget / 2) * 100);
+  const effectiveBudget = couponApplied ? +(budget * 0.9).toFixed(2) : budget;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -545,7 +570,12 @@ function EcommerceForm() {
     try {
       const res = await authedFetch("/api/workflows", {
         method: "POST",
-        body: JSON.stringify({ goal, budgetAlgo: budget, tier, chain }),
+        body: JSON.stringify({
+          goal: `[Qty: ${quantity}] ${goal}${priorityShipping ? " [Priority Shipping]" : ""}${compareSuppliers ? " [Multi-Supplier Compare]" : ""}`,
+          budgetAlgo: effectiveBudget,
+          tier,
+          chain,
+        }),
       });
       const parsed = await safeJson(res);
       if (!parsed.ok || !parsed.data?.workflow) {
@@ -561,8 +591,8 @@ function EcommerceForm() {
   }
 
   return (
-    <div className="flex h-fit flex-col gap-6">
-      {/* Product URL Scanner */}
+    <div className="flex h-fit flex-col gap-5">
+      {/* URL Scanner */}
       <UrlProductScanner
         onPlanProduct={(scannedGoal, scannedBudget) => {
           setGoal(scannedGoal);
@@ -570,40 +600,54 @@ function EcommerceForm() {
         }}
       />
 
-      {/* E-Commerce Procurement Form */}
+      {/* Main Procurement Form */}
       <form
         onSubmit={handleSubmit}
-        className="flex flex-col gap-5 rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg-elevated)] p-6 shadow-sm"
+        className="flex flex-col gap-8 rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg-elevated)] p-8 shadow-sm"
       >
+        {/* Header */}
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <ShoppingCart size={18} className="text-sky-400" />
-            <h2 className="text-sm font-semibold text-[var(--color-headline)]">E-Commerce Procurement Goal</h2>
+          <div className="flex items-center gap-4">
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-sky-500/10 border border-sky-500/20">
+              <ShoppingCart size={22} className="text-sky-400" />
+            </div>
+            <div>
+              <h2 className="text-base font-semibold text-[var(--color-headline)]">E-Commerce Orchestrator</h2>
+              <p className="text-xs text-[var(--color-muted)] mt-0.5">AI agent · autonomous end-to-end purchasing</p>
+            </div>
           </div>
-          <span className="rounded-full bg-sky-500/10 px-2.5 py-0.5 text-[10px] font-bold text-sky-400 uppercase">
-            Shopping Engine
-          </span>
+          <div className="flex items-center gap-3">
+            <VoiceInputButton onTranscript={(text) => setGoal(text)} disabled={submitting} />
+            <span className="rounded-full bg-sky-500/10 px-3 py-1.5 text-[11px] font-bold text-sky-400 uppercase tracking-wide border border-sky-500/20">
+              Shopping Engine
+            </span>
+          </div>
         </div>
 
-        <div className="flex flex-col gap-2">
-          <label htmlFor="ecom-goal" className="text-xs font-semibold text-[var(--color-headline)]">
-            Product Procurement Prompt
+        {/* Product Goal */}
+        <div className="flex flex-col gap-3">
+          <label htmlFor="ecom-goal" className="text-xs font-semibold uppercase tracking-wider text-[var(--color-muted)]">
+            Product / URL Prompt
           </label>
           <textarea
             id="ecom-goal"
             value={goal}
             onChange={(e) => setGoal(e.target.value)}
-            rows={3}
-            placeholder="Paste product URL or describe product procurement goal..."
-            className="rounded-xl border border-[var(--color-border)] bg-transparent px-3.5 py-2.5 text-sm text-[var(--color-headline)] placeholder:text-[var(--color-muted)] focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-400/40"
+            rows={4}
+            placeholder="Paste a product URL or describe what to buy…"
+            className="rounded-xl border border-[var(--color-border)] bg-white/[0.02] px-5 py-4 text-sm text-[var(--color-headline)] placeholder:text-[var(--color-muted)] focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-400/25 resize-none leading-relaxed"
           />
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
-          <div className="flex flex-col gap-2">
-            <label htmlFor="ecom-budget" className="text-xs font-semibold text-[var(--color-headline)]">
-              Max Budget
-            </label>
+        {/* Budget + Chain */}
+        <div className="grid grid-cols-2 gap-6">
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center justify-between">
+              <label htmlFor="ecom-budget" className="text-xs font-semibold uppercase tracking-wider text-[var(--color-muted)]">
+                Max Budget
+              </label>
+              <span className="text-xs font-mono text-sky-400 font-semibold">{effectiveBudget} ALGO</span>
+            </div>
             <input
               id="ecom-budget"
               type="number"
@@ -611,19 +655,29 @@ function EcommerceForm() {
               step={0.1}
               value={budget}
               onChange={(e) => setBudget(Number(e.target.value))}
-              className="rounded-xl border border-[var(--color-border)] bg-transparent px-3 py-2 text-sm text-[var(--color-headline)] focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-400/40"
+              className="rounded-xl border border-[var(--color-border)] bg-white/[0.02] px-5 py-3.5 text-sm text-[var(--color-headline)] focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-400/25"
             />
+            {/* Budget meter */}
+            <div className="h-1.5 w-full rounded-full bg-white/5 overflow-hidden">
+              <div
+                className="h-full rounded-full transition-all duration-500"
+                style={{
+                  width: `${budgetUsedPct}%`,
+                  background: budgetUsedPct > 75 ? "#f97316" : "#38bdf8",
+                }}
+              />
+            </div>
           </div>
 
-          <div className="flex flex-col gap-2">
-            <label htmlFor="ecom-chain" className="text-xs font-semibold text-[var(--color-headline)]">
+          <div className="flex flex-col gap-3">
+            <label htmlFor="ecom-chain" className="text-xs font-semibold uppercase tracking-wider text-[var(--color-muted)]">
               Payment Chain
             </label>
             <select
               id="ecom-chain"
               value={chain}
               onChange={(e) => setChain(e.target.value as SupportedChain)}
-              className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)] px-3 py-2 text-sm text-[var(--color-headline)] focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-400/40"
+              className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)] px-5 py-3.5 text-sm text-[var(--color-headline)] focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-400/25"
             >
               <option value="algorand">Algorand (Lute)</option>
               <option value="stellar">Stellar (Freighter)</option>
@@ -632,7 +686,82 @@ function EcommerceForm() {
           </div>
         </div>
 
-        {error && <p className="text-xs text-red-400">{error}</p>}
+        {/* Quantity + Options row */}
+        <div className="flex flex-wrap items-center gap-3">
+          {/* Quantity stepper */}
+          <div className="flex items-center gap-1.5 rounded-xl border border-[var(--color-border)] bg-white/[0.02] px-2 py-2">
+            <button
+              type="button"
+              onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+              className="flex h-8 w-8 items-center justify-center rounded-lg text-[var(--color-muted)] hover:bg-white/10 hover:text-white transition-colors text-base font-bold"
+            >−</button>
+            <span className="w-9 text-center text-sm font-semibold text-[var(--color-headline)]">{quantity}</span>
+            <button
+              type="button"
+              onClick={() => setQuantity((q) => q + 1)}
+              className="flex h-8 w-8 items-center justify-center rounded-lg text-[var(--color-muted)] hover:bg-white/10 hover:text-white transition-colors text-base font-bold"
+            >+</button>
+            <span className="pr-2 text-xs text-[var(--color-muted)] ml-1">qty</span>
+          </div>
+
+          {/* Priority Shipping toggle */}
+          <button
+            type="button"
+            onClick={() => setPriorityShipping((p) => !p)}
+            className={`flex items-center gap-2 rounded-xl border px-4 py-2.5 text-xs font-semibold transition-all ${
+              priorityShipping
+                ? "border-sky-400/60 bg-sky-500/15 text-sky-300"
+                : "border-[var(--color-border)] bg-white/[0.02] text-[var(--color-muted)] hover:border-white/20 hover:text-[var(--color-headline)]"
+            }`}
+          >
+            <Truck size={14} />
+            Priority Shipping
+          </button>
+
+          {/* Compare Suppliers toggle */}
+          <button
+            type="button"
+            onClick={() => setCompareSuppliers((c) => !c)}
+            className={`flex items-center gap-2 rounded-xl border px-4 py-2.5 text-xs font-semibold transition-all ${
+              compareSuppliers
+                ? "border-emerald-400/60 bg-emerald-500/15 text-emerald-300"
+                : "border-[var(--color-border)] bg-white/[0.02] text-[var(--color-muted)] hover:border-white/20 hover:text-[var(--color-headline)]"
+            }`}
+          >
+            <LinkSimple size={14} />
+            Multi-Supplier Compare
+          </button>
+        </div>
+
+        {/* Coupon Code */}
+        <div className="flex gap-3">
+          <input
+            type="text"
+            value={coupon}
+            onChange={(e) => { setCoupon(e.target.value); setCouponApplied(false); }}
+            placeholder="Coupon code (e.g. VELDAR10)"
+            className="flex-1 rounded-xl border border-[var(--color-border)] bg-white/[0.02] px-5 py-3.5 text-sm text-[var(--color-headline)] placeholder:text-[var(--color-muted)] focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-400/25"
+          />
+          <button
+            type="button"
+            onClick={() => {
+              if (coupon.trim()) setCouponApplied(true);
+            }}
+            className={`rounded-xl px-6 py-3.5 text-sm font-semibold transition-all ${
+              couponApplied
+                ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
+                : "bg-sky-500/15 text-sky-400 border border-sky-500/25 hover:bg-sky-500/25"
+            }`}
+          >
+            {couponApplied ? <><Check size={14} className="inline mr-1.5" />Applied 10%</> : "Apply"}
+          </button>
+        </div>
+
+        {error && (
+          <p className="rounded-xl border border-red-500/20 bg-red-500/5 px-4 py-2.5 text-xs text-red-400">
+            {error}
+          </p>
+        )}
 
         <SpecularButton
           type="submit"
@@ -644,97 +773,107 @@ function EcommerceForm() {
           lineColor="#38bdf8"
           baseColor="#0284c7"
           autoAnimate={true}
-          className="w-full mt-1"
+          className="w-full"
         >
           {submitting ? (
             <>
               <Spinner size={16} className="animate-spin" />
-              <span>Analyzing Product Scraper...</span>
+              <span>Orchestrating Purchase…</span>
             </>
           ) : (
             <>
               <Sparkle size={16} />
-              <span>Start E-Commerce Procurement</span>
+              <span>Launch Procurement Agent</span>
             </>
           )}
         </SpecularButton>
       </form>
 
-      {/* E-Commerce Web3 Primitives Status Card */}
-      <div className="flex flex-col gap-3 rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg-elevated)] p-5">
-        <div className="flex items-center justify-between">
-          <p className="text-xs font-semibold text-[var(--color-headline)]">E-Commerce Web3 Primitives Active</p>
-          <span className="rounded-full bg-sky-500/10 px-2 py-0.5 text-[10px] font-bold text-sky-400">
-            Physical Escrow Protection
-          </span>
-        </div>
-
-        <div className="flex flex-col gap-2.5 text-xs text-[var(--color-body)]">
-          <div className="flex items-center justify-between rounded-xl border border-white/5 bg-white/[0.02] p-2.5">
-            <div className="flex items-center gap-2">
-              <Truck size={16} className="text-sky-400" />
-              <span>Carrier Oracle (FedEx / UPS)</span>
-            </div>
-            <span className="font-mono text-[10px] text-sky-300">Proof of Delivery</span>
+      {/* Web3 Primitives + Templates — side by side */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        {/* Web3 Primitives */}
+        <div className="flex flex-col gap-3 rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg-elevated)] p-5">
+          <div className="flex items-center justify-between">
+            <p className="text-xs font-semibold text-[var(--color-headline)]">Active Web3 Guards</p>
+            <span className="rounded-full bg-sky-500/10 px-2 py-0.5 text-[10px] font-bold text-sky-400 border border-sky-500/20">
+              On-Chain
+            </span>
           </div>
-
-          <div className="flex items-center justify-between rounded-xl border border-white/5 bg-white/[0.02] p-2.5">
-            <div className="flex items-center gap-2">
-              <Receipt size={16} className="text-emerald-400" />
-              <span>Verifiable Digital Receipt NFT</span>
-            </div>
-            <span className="font-mono text-[10px] text-emerald-300">On-Chain ASA</span>
-          </div>
-
-          <div className="flex items-center justify-between rounded-xl border border-white/5 bg-white/[0.02] p-2.5">
-            <div className="flex items-center gap-2">
-              <Key size={16} className="text-amber-400" />
-              <span>Category Session Key Limits</span>
-            </div>
-            <span className="font-mono text-[10px] text-amber-300">Auto-Approve &lt;$100</span>
-          </div>
-        </div>
-      </div>
-
-      {/* E-Commerce Quick Templates */}
-      <div className="flex flex-col gap-3 rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg-elevated)] p-5">
-        <p className="text-xs font-semibold text-[var(--color-headline)]">Quick E-Commerce Templates</p>
-        <div className="flex flex-col gap-2">
-          {ECOMMERCE_PRESETS.map((preset) => {
-            const Icon = preset.icon;
-            return (
-              <button
-                key={preset.title}
-                type="button"
-                onClick={() => {
-                  setGoal(preset.goal);
-                  setBudget(preset.budget);
-                }}
-                className="group flex items-center justify-between gap-3 rounded-xl border border-[var(--color-border)]/60 bg-white/[0.02] p-3 text-left transition-colors hover:border-sky-400/40 hover:bg-white/[0.05]"
-              >
-                <div className="flex items-center gap-2.5 min-w-0">
-                  <div className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-sky-500/10 text-sky-400 group-hover:bg-sky-500 group-hover:text-white transition-colors">
-                    <Icon size={16} />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="truncate text-xs font-medium text-[var(--color-headline)]">{preset.title}</p>
-                    <p className="text-[11px] text-[var(--color-muted)]">{preset.budget} ALGO max</p>
-                  </div>
+          <div className="flex flex-col gap-2 text-xs text-[var(--color-body)]">
+            {[
+              { icon: Truck, label: "Carrier Oracle (FedEx/UPS)", badge: "Proof of Delivery", color: "text-sky-400" },
+              { icon: Receipt, label: "Digital Receipt NFT", badge: "On-Chain ASA", color: "text-emerald-400" },
+              { icon: Key, label: "Session Key Auto-Approve", badge: "<$100", color: "text-amber-400" },
+              { icon: ShieldCheck, label: "Escrow Smart Contract", badge: "Locked", color: "text-violet-400" },
+            ].map(({ icon: Icon, label, badge, color }) => (
+              <div key={label} className="flex items-center justify-between rounded-lg border border-white/5 bg-white/[0.02] px-3 py-2">
+                <div className="flex items-center gap-2">
+                  <Icon size={13} className={color} />
+                  <span className="text-[11px]">{label}</span>
                 </div>
-                <CaretRight size={14} className="shrink-0 text-[var(--color-muted)] group-hover:text-[var(--color-headline)] transition-colors" />
-              </button>
-            );
-          })}
+                <span className={`font-mono text-[10px] ${color}`}>{badge}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Quick Templates */}
+        <div className="flex flex-col gap-3 rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg-elevated)] p-5">
+          <p className="text-xs font-semibold text-[var(--color-headline)]">Quick Templates</p>
+          <div className="flex flex-col gap-2">
+            {ECOMMERCE_PRESETS.map((preset) => {
+              const Icon = preset.icon;
+              const isActive = activePreset === preset.title;
+              return (
+                <button
+                  key={preset.title}
+                  type="button"
+                  onClick={() => {
+                    setGoal(preset.goal);
+                    setBudget(preset.budget);
+                    setActivePreset(preset.title);
+                  }}
+                  className={`group flex items-center justify-between gap-2 rounded-xl border p-2.5 text-left transition-all ${
+                    isActive
+                      ? "border-sky-400/50 bg-sky-500/10"
+                      : "border-[var(--color-border)]/60 bg-white/[0.02] hover:border-sky-400/30 hover:bg-white/[0.04]"
+                  }`}
+                >
+                  <div className="flex items-center gap-2 min-w-0">
+                    <div className={`grid h-7 w-7 shrink-0 place-items-center rounded-lg transition-colors ${
+                      isActive ? "bg-sky-500 text-white" : "bg-sky-500/10 text-sky-400 group-hover:bg-sky-500 group-hover:text-white"
+                    }`}>
+                      <Icon size={13} />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="truncate text-[11px] font-medium text-[var(--color-headline)]">{preset.title}</p>
+                      <p className="text-[10px] text-[var(--color-muted)]">{preset.budget} ALGO</p>
+                    </div>
+                  </div>
+                  <CaretRight size={12} className="shrink-0 text-[var(--color-muted)]" />
+                </button>
+              );
+            })}
+          </div>
         </div>
       </div>
 
-      {/* Price Comparison Panel — shown immediately to show AI scanning */}
+      {/* Price Comparison Panel */}
       <PriceComparisonPanel productName={productName} basePrice={basePrice} />
 
-      {/* NFT Receipt + Supply Chain — shown after workflow is submitted */}
+      {/* Live Currency Conversion */}
+      <CurrencyConverter amount={effectiveBudget} base="algorand" label={`${effectiveBudget} ALGO budget`} />
+
+      {/* Multi-Agent Supplier Negotiation */}
+      <AgentNegotiationPanel product={productName} budget={effectiveBudget * 180} />
+
+      {/* NFT Receipt after submission */}
       {workflowSubmitted && (
         <NftReceipt productName={productName} price={basePrice} />
       )}
+
+      {/* Package Tracker after submission */}
+      <PackageTracker productName={productName} workflowSubmitted={workflowSubmitted} />
     </div>
   );
 }
