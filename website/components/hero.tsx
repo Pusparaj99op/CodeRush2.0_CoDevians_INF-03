@@ -88,28 +88,40 @@ export function Hero() {
         </div>
 
         {/* Right Column: Hero Centerpiece Showcase Card with CursorGrid interactive background */}
-        <div className="lg:col-span-5 lg:pl-2 relative">
-          <div className="absolute inset-0 z-0 rounded-[2.5rem] overflow-hidden pointer-events-auto">
-            <CursorGrid
-              cellSize={60}
-              color="#ff5228"
-              radius={150}
-              falloff="smooth"
+        <div className="lg:col-span-5 lg:pl-2">
+          {/*
+            Key fix: this wrapper must be `relative` with an explicit min-height
+            so the `absolute inset-0` CursorGrid canvas has real pixel dimensions.
+            Without it the canvas collapses to 0×0 and nothing is drawn.
+          */}
+          <div className="relative min-h-[420px] lg:min-h-[520px]">
+            {/* CursorGrid — covers the entire right-column card area */}
+            <div
+              className="absolute inset-0 z-0 overflow-hidden rounded-[2.5rem]"
+              style={{ pointerEvents: "auto" }}
+            >
+              <CursorGrid
+                cellSize={60}
+                color="#ff5228"
+                radius={160}
+                falloff="smooth"
               holdTime={400}
               fadeDuration={800}
               lineWidth={1.2}
-              maxOpacity={1}
-              fillOpacity={0.15}
-              gridOpacity={0.08}
-              cellRadius={6}
-              clickPulse
-              pulseSpeed={600}
-            />
-          </div>
+                maxOpacity={1}
+                fillOpacity={0.18}
+                gridOpacity={0.12}
+                cellRadius={6}
+                clickPulse
+                pulseSpeed={600}
+              />
+            </div>
 
-          <div className="relative z-10 rounded-[2.5rem] border border-white/15 bg-gradient-to-b from-white/10 via-white/[0.03] to-transparent p-1.5 shadow-[0_30px_90px_rgba(0,0,0,0.85),_0_0_50px_rgba(255,82,40,0.22)] backdrop-blur-2xl">
-            <div className="rounded-[2.2rem] bg-[#0c0a09]/95 p-6 lg:p-8">
-              <TracePreview />
+            {/* TracePreview card — sits on top of the grid */}
+            <div className="relative z-10 rounded-[2.5rem] border border-white/15 bg-gradient-to-b from-white/10 via-white/[0.03] to-transparent p-1.5 shadow-[0_30px_90px_rgba(0,0,0,0.85),_0_0_50px_rgba(255,82,40,0.22)] backdrop-blur-2xl h-full">
+              <div className="rounded-[2.2rem] bg-[#0c0a09]/95 p-6 lg:p-8">
+                <TracePreview />
+              </div>
             </div>
           </div>
         </div>
