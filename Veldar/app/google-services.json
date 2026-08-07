@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "511913451189",
+    "project_id": "com-example-veldar-1426b",
+    "storage_bucket": "com-example-veldar-1426b.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:511913451189:android:22c363e9d044db05ca68fc",
+        "android_client_info": {
+          "package_name": "com.example.veldar"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBPb8Z6t-pPYcx7skfCfYDbMorR7_ikobw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
