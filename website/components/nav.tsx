@@ -59,7 +59,7 @@ function AccountMenu() {
 
       <Link
         href="/dashboard"
-        className="rounded-full bg-[var(--color-accent)] px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-[var(--color-accent-hover)] active:scale-[0.98]"
+        className="btn-spectacular px-5 py-2 text-sm font-semibold"
       >
         Dashboard
       </Link>
@@ -71,7 +71,7 @@ function AccountMenu() {
         aria-label="Account menu"
         className="flex items-center gap-1.5 rounded-full border border-[var(--color-border)] bg-[var(--color-bg-elevated)] py-1 pl-1.5 pr-2.5 transition-colors hover:border-[var(--color-headline)]/40"
       >
-        <span className="grid h-7 w-7 place-items-center rounded-full bg-[var(--color-accent)] text-xs font-bold text-white shadow-sm">
+        <span className="grid h-7 w-7 place-items-center rounded-full bg-gradient-to-br from-[#ff4a1f] to-[#ff6b2e] text-xs font-bold text-white border border-white/20 shadow-[0_0_10px_rgba(255,82,40,0.4)]">
           {initial}
         </span>
         <CaretDown size={14} className={`text-[var(--color-muted)] transition-transform duration-200 ${open ? "rotate-180 text-[var(--color-headline)]" : ""}`} />
@@ -127,29 +127,29 @@ export function Nav() {
   const router = useRouter();
 
   return (
-    <header className="sticky top-0 z-[100] w-full">
+    <header className="sticky top-4 z-[100] w-[calc(100%-2rem)] max-w-7xl mx-auto px-2 sm:px-4">
       <GlassSurface
         width="100%"
-        height={72}
-        borderRadius={0}
-        backgroundOpacity={0.2}
+        height={68}
+        borderRadius={9999}
+        backgroundOpacity={0.3}
         saturation={1.4}
         blur={16}
         distortionScale={-60}
-        className="glass-surface--nav border-b border-white/10 relative z-[100]"
+        className="glass-surface--nav border border-white/15 rounded-full shadow-[0_8px_32px_rgba(0,0,0,0.5),_0_0_15px_rgba(255,255,255,0.05)] relative z-[100]"
       >
-      <div className="w-full mx-auto flex h-18 max-w-7xl items-center justify-between px-8 lg:px-12">
-        <LogoLink className="mr-8 lg:mr-12" />
+      <div className="w-full mx-auto flex h-full items-center justify-between px-6 lg:px-8">
+        <LogoLink className="mr-6 lg:mr-10" />
 
-        <nav className="hidden items-center gap-8 lg:flex">
+        <nav className="hidden items-center gap-2 lg:flex">
           {LINKS.map((link) => (
             <Link
               key={link.href}
               href={link.href}
               className={
                 pathname === link.href
-                  ? "text-sm font-medium text-[var(--color-headline)]"
-                  : "text-sm text-[var(--color-body)] transition-colors hover:text-[var(--color-headline)]"
+                  ? "rounded-full bg-white/10 px-4 py-2 text-sm font-semibold text-[var(--color-headline)] shadow-inner transition-all"
+                  : "rounded-full px-4 py-2 text-sm text-[var(--color-body)] transition-all hover:bg-white/5 hover:text-[var(--color-headline)]"
               }
             >
               {link.label}
@@ -164,20 +164,20 @@ export function Nav() {
             <div className="flex items-center gap-2">
               <Link
                 href="/signin"
-                className="rounded-full px-4 py-2.5 text-sm font-medium text-[var(--color-body)] transition-colors hover:text-[var(--color-headline)]"
+                className="rounded-full px-4 py-2 text-sm font-medium text-[var(--color-body)] transition-colors hover:text-[var(--color-headline)]"
               >
                 Sign in
               </Link>
               <Link
                 href="/signup"
-                className="rounded-full bg-[var(--color-accent)] px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[var(--color-accent-hover)] active:scale-[0.98]"
+                className="btn-spectacular px-5 py-2 text-sm font-semibold"
               >
                 Sign up
               </Link>
             </div>
           )}
           {authError && (
-            <div className="absolute right-0 top-full z-[9999] mt-2 w-64 rounded-xl border border-red-500/30 bg-[var(--color-bg-elevated)] p-3 text-xs text-red-300 shadow-lg">
+            <div className="absolute right-0 top-full z-[9999] mt-2 w-64 rounded-2xl border border-red-500/30 bg-[var(--color-bg-elevated)] p-3 text-xs text-red-300 shadow-lg">
               {authError}
             </div>
           )}
@@ -194,14 +194,14 @@ export function Nav() {
       </GlassSurface>
 
       {open && (
-        <div className="border-b border-[var(--color-border)] bg-[var(--color-bg)] px-6 py-4 lg:hidden">
+        <div className="mt-3 overflow-hidden rounded-3xl border border-white/15 bg-[#12100e]/95 p-6 backdrop-blur-2xl shadow-2xl lg:hidden">
           <nav className="flex flex-col gap-4">
             {LINKS.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
                 onClick={() => setOpen(false)}
-                className="text-sm text-[var(--color-body)]"
+                className="text-sm font-medium text-[var(--color-body)] hover:text-[var(--color-headline)]"
               >
                 {link.label}
               </Link>

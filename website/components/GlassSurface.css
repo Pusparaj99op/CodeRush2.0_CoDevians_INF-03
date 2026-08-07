@@ -70,12 +70,12 @@
   outline-offset: 2px;
 }
 
-/* Veldar nav: the glass surface IS the sticky bar, so its content should
-   fill the bar edge-to-edge rather than center a fixed-padding box.
+/* Veldar nav: floating circular pill surface.
    Must have overflow: visible to allow popovers/account dropdowns to render. */
 .glass-surface--nav {
   overflow: visible !important;
   z-index: 100;
+  border-radius: 9999px !important;
 }
 
 .glass-surface--nav .glass-surface__content {
@@ -85,4 +85,5 @@
   width: 100%;
   overflow: visible !important;
   z-index: 100;
+  border-radius: 9999px !important;
 }

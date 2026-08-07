@@ -1,77 +1,84 @@
-import { Check } from "@phosphor-icons/react/dist/ssr";
+import { ArrowRight, Check, Star } from "@phosphor-icons/react/dist/ssr";
 import Link from "next/link";
 import { TIERS, tierCapLabel, tierCutLabel } from "@/lib/content";
 import { Reveal } from "./reveal";
 
 export function Pricing() {
   return (
-    <section id="pricing" className="py-24 lg:py-32">
+    <section id="pricing" className="relative z-10 py-24 lg:py-32">
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
         <Reveal className="flex flex-col items-start gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <span className="text-xs font-medium uppercase tracking-[0.14em] text-[var(--color-muted)]">
+            <span className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--color-muted)]">
               Plans
             </span>
-            <h2 className="mt-3 max-w-xl font-[family-name:var(--font-display)] text-3xl font-medium leading-tight text-[var(--color-headline)] md:text-4xl">
+            <h2 className="mt-3 max-w-xl font-display text-3xl font-medium leading-tight text-[var(--color-headline)] md:text-4xl">
               How much autonomy you give it is up to you.
             </h2>
           </div>
           <Link
             href="/pricing"
-            className="shrink-0 text-sm font-medium text-[var(--color-accent)] transition-colors hover:text-[var(--color-accent-hover)]"
+            className="veldar-link-arrow shrink-0 text-sm font-medium"
           >
-            Compare all plans
+            <span>Compare all plans</span>
+            <ArrowRight size={16} />
           </Link>
         </Reveal>
 
-        <div className="mt-12 grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <div className="mt-12 grid grid-cols-1 gap-6 lg:grid-cols-3 items-stretch">
           {TIERS.map((tier, i) => (
             <Reveal key={tier.tier} delay={i * 0.1}>
               <div
-                className={
-                  tier.featured
-                    ? "flex h-full flex-col rounded-2xl p-8 shadow-[0_24px_60px_rgb(255_82_40_/_0.18)] lg:-translate-y-3"
-                    : "flex h-full flex-col rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg-elevated)] p-8"
-                }
-                style={
-                  tier.featured
-                    ? { background: "linear-gradient(160deg, var(--color-card-from), var(--color-card-to))" }
-                    : undefined
-                }
+                className={`relative flex h-full flex-col justify-between ${
+                  tier.featured ? "veldar-card-featured" : "veldar-card-outline"
+                } p-8`}
               >
-                <h3 className={tier.featured ? "text-lg font-semibold text-white" : "text-lg font-semibold text-[var(--color-headline)]"}>
-                  {tier.name}
-                </h3>
-                <p className={tier.featured ? "mt-2 text-3xl font-semibold text-white" : "mt-2 text-3xl font-semibold text-[var(--color-headline)]"}>
-                  {tier.price}
-                </p>
-                <p className={tier.featured ? "mt-1 text-sm text-white/85" : "mt-1 text-sm text-[var(--color-muted)]"}>
-                  {tierCapLabel(tier.tier)} &middot; {tierCutLabel(tier.tier)}
-                </p>
+                {tier.featured && (
+                  <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
+                    <span className="veldar-badge-accent shadow-md text-[11px] font-semibold">
+                      <Star size={12} weight="fill" />
+                      Most Popular
+                    </span>
+                  </div>
+                )}
 
-                <ul className="mt-6 flex flex-1 flex-col gap-3">
-                  {tier.features.map((f) => (
-                    <li key={f} className="flex items-start gap-2 text-sm">
-                      <Check
-                        size={16}
-                        weight="bold"
-                        className={tier.featured ? "mt-0.5 shrink-0 text-white" : "mt-0.5 shrink-0 text-[var(--color-cta)]"}
-                      />
-                      <span className={tier.featured ? "text-white/90" : "text-[var(--color-body)]"}>{f}</span>
-                    </li>
-                  ))}
-                </ul>
+                <div>
+                  <h3 className="text-lg font-semibold text-[var(--color-headline)]">
+                    {tier.name}
+                  </h3>
+                  <p className="mt-2 text-3xl font-bold font-display text-[var(--color-headline)]">
+                    {tier.price}
+                  </p>
+                  <p className="mt-1 text-xs font-medium text-[var(--color-muted)]">
+                    {tierCapLabel(tier.tier)} &middot; {tierCutLabel(tier.tier)}
+                  </p>
 
-                <Link
-                  href="/dashboard"
-                  className={
-                    tier.featured
-                      ? "mt-8 rounded-full bg-white px-6 py-3 text-center text-sm font-semibold text-[var(--color-cta)] transition-transform active:scale-[0.98]"
-                      : "mt-8 rounded-full border border-[var(--color-border)] px-6 py-3 text-center text-sm font-semibold text-[var(--color-headline)] transition-colors hover:border-[var(--color-headline)]/40"
-                  }
-                >
-                  Choose {tier.name}
-                </Link>
+                  <ul className="mt-6 flex flex-col gap-3.5 border-t border-white/10 pt-6">
+                    {tier.features.map((f) => (
+                      <li key={f} className="flex items-start gap-2.5 text-sm">
+                        <Check
+                          size={16}
+                          weight="bold"
+                          className="mt-0.5 shrink-0 text-[#ff5228]"
+                        />
+                        <span className="text-[var(--color-body)] leading-relaxed">{f}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                <div className="mt-8 pt-4">
+                  <Link
+                    href="/dashboard"
+                    className={`w-full py-3.5 text-sm font-semibold text-center ${
+                      tier.featured
+                        ? "btn-spectacular"
+                        : "btn-secondary"
+                    }`}
+                  >
+                    Choose {tier.name}
+                  </Link>
+                </div>
               </div>
             </Reveal>
           ))}

@@ -105,17 +105,9 @@ export function AuthForm({ mode }: { mode: "signin" | "signup" }) {
         </div>
       )}
 
-      {!configured && (
-        <p className="mt-6 rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-200">
-          Firebase isn&apos;t configured on this deployment, so sign-in is disabled. Set the
-          <code className="mx-1 font-mono">NEXT_PUBLIC_FIREBASE_*</code> environment variables.
-        </p>
-      )}
-
       <div className="mt-8">
         <GoogleButton
           onClick={signInWithGoogle}
-          disabled={!configured}
           label={isSignUp ? "Sign up with Google" : "Continue with Google"}
         />
       </div>
@@ -198,8 +190,8 @@ export function AuthForm({ mode }: { mode: "signin" | "signup" }) {
 
         <button
           type="submit"
-          disabled={!configured || submitting}
-          className="mt-2 rounded-full bg-[var(--color-accent)] px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-[var(--color-accent-hover)] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50"
+          disabled={submitting}
+          className="btn-spectacular mt-2 w-full py-3.5 text-sm font-semibold shadow-lg disabled:cursor-not-allowed disabled:opacity-50"
         >
           {submitting ? "Working…" : isSignUp ? "Create account" : "Sign in"}
         </button>

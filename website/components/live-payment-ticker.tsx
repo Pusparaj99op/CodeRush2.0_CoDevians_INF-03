@@ -28,10 +28,10 @@ const STREAMING_POOL = [
 ];
 
 const STATUS_META = {
-  fulfilled: { icon: CheckCircle, text: "text-emerald-400", label: "Verified On-Chain", badge: "bg-emerald-500/10 border-emerald-500/20 text-emerald-300" },
-  paid: { icon: Coins, text: "text-[var(--color-cta)]", label: "Paid x402", badge: "bg-[var(--color-cta)]/10 border-[var(--color-cta)]/20 text-[var(--color-cta)]" },
-  awaiting_approval: { icon: Hourglass, text: "text-[var(--color-accent)]", label: "Awaiting Cap Approval", badge: "bg-[var(--color-accent)]/10 border-[var(--color-accent)]/20 text-[var(--color-accent)]" },
-  processing: { icon: CircleDashed, text: "text-amber-400 animate-spin", label: "Quoting Marketplace", badge: "bg-amber-500/10 border-amber-500/20 text-amber-300" },
+  fulfilled: { icon: CheckCircle, text: "text-emerald-400", label: "Verified On-Chain", badgeClass: "veldar-badge-emerald" },
+  paid: { icon: Coins, text: "text-[#ff5228]", label: "Paid x402", badgeClass: "veldar-badge-accent" },
+  awaiting_approval: { icon: Hourglass, text: "text-amber-300", label: "Awaiting Cap Approval", badgeClass: "veldar-badge-muted" },
+  processing: { icon: CircleDashed, text: "text-amber-400 animate-spin", label: "Quoting Marketplace", badgeClass: "veldar-badge-muted" },
 } as const;
 
 export function LivePaymentTicker() {
@@ -76,11 +76,11 @@ export function LivePaymentTicker() {
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
         <div className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-end">
           <div>
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-[var(--color-cta)]/30 bg-[var(--color-cta)]/10 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-[var(--color-cta)]">
+            <span className="veldar-badge-accent uppercase tracking-wider text-[11px]">
               <Lightning size={14} weight="fill" />
               Live Web3 Payment Feed
             </span>
-            <h2 className="mt-3 font-[family-name:var(--font-display)] text-3xl font-medium leading-tight text-[var(--color-headline)] md:text-4xl">
+            <h2 className="mt-3 font-display text-3xl font-medium leading-tight text-[var(--color-headline)] md:text-4xl">
               Algorand micropayments in motion.
             </h2>
           </div>
@@ -89,10 +89,10 @@ export function LivePaymentTicker() {
           </p>
         </div>
 
-        <div className="mt-10 overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg-elevated)] p-6 shadow-[0_30px_90px_rgba(0,0,0,0.5)]">
+        <div className="mt-10 overflow-hidden rounded-2xl border border-white/15 bg-[#0d0b09]/95 p-6 shadow-[0_30px_90px_rgba(0,0,0,0.6)] backdrop-blur-2xl">
           {/* Header Bar */}
-          <div className="mb-6 flex flex-wrap items-center justify-between gap-4 border-b border-[var(--color-border)] pb-4 font-mono text-xs">
-            <div className="flex items-center gap-2 text-[var(--color-headline)]">
+          <div className="mb-6 flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-4 font-mono text-xs">
+            <div className="flex items-center gap-2.5 text-[var(--color-headline)] font-semibold">
               <span className="relative flex h-2 w-2">
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
                 <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500"></span>
@@ -100,18 +100,18 @@ export function LivePaymentTicker() {
               <span>LIVE x402 FACILITATOR FEED</span>
             </div>
 
-            <div className="flex items-center gap-4 text-[var(--color-muted)]">
-              <span className="flex items-center gap-1">
+            <div className="flex items-center gap-4 text-[var(--color-muted)] text-[11px]">
+              <span className="flex items-center gap-1.5">
                 <ArrowClockwise size={12} className="animate-spin text-emerald-400" />
                 Algorand TestNet
               </span>
               <span>•</span>
-              <span>Block Finality: ~3.3s</span>
+              <span>Block Finality: ~1.2s</span>
             </div>
           </div>
 
-          {/* Feed List */}
-          <div className="flex flex-col gap-3">
+          {/* Feed List Table */}
+          <div className="flex flex-col gap-2.5 divide-y divide-white/5">
             {feed.map((row) => {
               const meta = STATUS_META[row.status];
               const Icon = meta.icon;
@@ -122,24 +122,25 @@ export function LivePaymentTicker() {
                   initial={reduce ? false : { opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.3 }}
-                  className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[var(--color-border)] bg-white/[0.02] p-4 transition-colors hover:bg-white/[0.04]"
+                  className="grid grid-cols-1 items-center gap-4 rounded-xl border border-white/5 bg-white/[0.015] px-4 py-3.5 transition-colors hover:border-white/15 hover:bg-white/[0.035] sm:grid-cols-[1fr_auto_140px]"
                 >
-                  <div className="flex items-center gap-3">
-                    <Icon size={20} weight="fill" className={meta.text} />
-                    <div>
-                      <p className="text-sm font-medium text-[var(--color-headline)]">{row.label}</p>
-                      <p className="font-mono text-xs text-[var(--color-muted)]">{row.provider}</p>
+                  <div className="flex items-center gap-3 min-w-0">
+                    <Icon size={20} weight="fill" className={`shrink-0 ${meta.text}`} />
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-semibold text-[var(--color-headline)]">{row.label}</p>
+                      <p className="truncate font-mono text-xs text-[var(--color-muted)]">{row.provider}</p>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-4 text-right">
-                    <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-[11px] font-medium ${meta.badge}`}>
+                  <div className="justify-self-start sm:justify-self-center">
+                    <span className={meta.badgeClass}>
                       {meta.label}
                     </span>
-                    <div>
-                      <p className="font-mono text-sm font-semibold text-[var(--color-headline)]">{row.amount}</p>
-                      <p className="font-mono text-[10px] text-[var(--color-footer-dim)]">{row.timestamp}</p>
-                    </div>
+                  </div>
+
+                  <div className="text-right font-mono">
+                    <p className="text-sm font-semibold text-[var(--color-headline)]">{row.amount}</p>
+                    <p className="text-[10px] text-[var(--color-muted)]">{row.timestamp}</p>
                   </div>
                 </motion.div>
               );
@@ -147,16 +148,16 @@ export function LivePaymentTicker() {
           </div>
 
           {/* Live Budget Bar */}
-          <div className="mt-6 rounded-xl border border-[var(--color-border)] bg-white/[0.015] p-4">
-            <div className="mb-2 flex items-center justify-between text-xs">
-              <span className="font-medium text-[var(--color-headline)]">Workflow Budget Utilization</span>
-              <span className="font-mono text-[var(--color-body)]">
+          <div className="mt-6 rounded-xl border border-white/10 bg-white/[0.02] p-4">
+            <div className="mb-2.5 flex items-center justify-between text-xs">
+              <span className="font-semibold text-[var(--color-headline)]">Workflow Budget Utilization</span>
+              <span className="font-mono font-medium text-[var(--color-headline)]">
                 {totalSpent} / {maxBudget} ALGO ({percentage}%)
               </span>
             </div>
-            <div className="h-2 w-full overflow-hidden rounded-full bg-white/10">
+            <div className="h-2.5 w-full overflow-hidden rounded-full bg-white/10">
               <div
-                className="h-full rounded-full bg-gradient-to-r from-[var(--color-accent)] to-[var(--color-cta)] transition-all duration-500"
+                className="h-full rounded-full bg-gradient-to-r from-[#ff4a1f] via-[#ff6b2e] to-[#ff5228] transition-all duration-500"
                 style={{ width: `${percentage}%` }}
               />
             </div>

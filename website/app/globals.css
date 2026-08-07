@@ -1,20 +1,17 @@
 @import "tailwindcss";
 
-/*
- * FlechaM-Medium is a licensed display font (see Doc/specs/00-overview.md
- * brand notes) and its files are not in this repo. Drop the woff2 into
- * public/fonts/ and uncomment the @font-face below to activate it; until
- * then --font-display falls back to Poppins, which is close enough in
- * weight/roundness to ship with.
- */
-/*
 @font-face {
   font-family: "FlechaM-Medium";
   src: url("/fonts/FlechaM-Medium.woff2") format("woff2");
   font-weight: 500;
   font-display: swap;
 }
-*/
+
+:root {
+  --font-display: var(--font-serif), "FlechaM-Medium", Georgia, serif;
+  --font-poppins: var(--font-poppins), "Poppins", sans-serif;
+  --font-inter: var(--font-inter), "Inter", sans-serif;
+}
 
 @theme {
   --color-bg: #0a0908;
@@ -23,17 +20,219 @@
   --color-card-to: #ff6b2e;
   --color-cta: #ff5228;
   --color-cta-hover: #ff6b42;
-  --color-accent: #6b5ef5;
-  --color-accent-hover: #7e73f7;
+  --color-accent: #ff5228;
+  --color-accent-hover: #ff6b42;
   --color-headline: #f5f3f0;
   --color-body: #c9c5bf;
   --color-muted: #8a8581;
   --color-footer-dim: #6b6660;
   --color-border: rgb(245 243 240 / 0.1);
 
-  --font-display: "FlechaM-Medium", var(--font-poppins), sans-serif;
-  --font-ui: var(--font-poppins), sans-serif;
-  --font-meta: var(--font-inter), sans-serif;
+  --font-display: var(--font-serif), "FlechaM-Medium", Georgia, serif;
+  --font-ui: var(--font-poppins), "Poppins", sans-serif;
+  --font-meta: var(--font-inter), "Inter", sans-serif;
+}
+
+/* ReactBits Specular Button Styles (Translucent dark glass + glowing orange outline) */
+@keyframes reactbits-shimmer {
+  0% {
+    transform: translateX(-150%) skewX(-15deg);
+  }
+  50%, 100% {
+    transform: translateX(250%) skewX(-15deg);
+  }
+}
+
+.btn-spectacular, .btn-specular {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 82, 40, 0.08);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  color: #ffffff !important;
+  font-weight: 600;
+  border-radius: 9999px;
+  border: 1.5px solid rgba(255, 82, 40, 0.65);
+  box-shadow:
+    0 0 18px -2px rgba(255, 82, 40, 0.4),
+    inset 0 1px 1px 0 rgba(255, 255, 255, 0.35);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
+}
+
+.btn-spectacular::before, .btn-specular::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 65%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.5) 45%,
+    rgba(255, 107, 46, 0.7) 50%,
+    rgba(255, 255, 255, 0.5) 55%,
+    transparent 100%
+  );
+  transform: translateX(-150%) skewX(-15deg);
+  animation: reactbits-shimmer 3.5s infinite ease-in-out;
+  pointer-events: none;
+}
+
+.btn-spectacular:hover, .btn-specular:hover {
+  background: rgba(255, 82, 40, 0.18);
+  border-color: #ff5228;
+  transform: translateY(-1px) scale(1.02);
+  box-shadow:
+    0 0 28px 2px rgba(255, 82, 40, 0.65),
+    0 4px 16px rgba(0, 0, 0, 0.4),
+    inset 0 1px 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+.btn-spectacular:active, .btn-specular:active {
+  transform: translateY(0) scale(0.98);
+}
+
+/* Secondary Button Component */
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  color: #ffffff !important;
+  font-weight: 600;
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.4);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+}
+
+.btn-secondary:active {
+  transform: translateY(0) scale(0.98);
+}
+
+/* Shared Card System (Level 1 resting -> Level 2 hover state) */
+.veldar-card-outline {
+  border-radius: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background-color: rgba(255, 255, 255, 0.02);
+  padding: 2rem;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.veldar-card-outline:hover {
+  border-color: rgba(255, 255, 255, 0.22);
+  background-color: rgba(255, 255, 255, 0.04);
+  transform: translateY(-2px);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+}
+
+/* Featured Card System (Level 3 focal state) */
+.veldar-card-featured {
+  border-radius: 1rem;
+  border: 1.5px solid rgba(255, 82, 40, 0.5);
+  background: linear-gradient(160deg, rgba(255, 82, 40, 0.15) 0%, rgba(255, 82, 40, 0.04) 50%, rgba(13, 11, 9, 0.95) 100%);
+  padding: 2rem;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 20px 50px rgba(255, 82, 40, 0.2);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.veldar-card-featured:hover {
+  border-color: rgba(255, 82, 40, 0.85);
+  transform: translateY(-3px);
+  box-shadow: 0 24px 60px rgba(255, 82, 40, 0.3);
+}
+
+/* Shared Badge System */
+.veldar-badge-emerald {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  border-radius: 9999px;
+  border: 1px solid rgba(52, 211, 153, 0.3);
+  background: rgba(52, 211, 153, 0.1);
+  padding: 0.25rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #34d399;
+}
+
+.veldar-badge-accent {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 82, 40, 0.4);
+  background: rgba(255, 82, 40, 0.1);
+  padding: 0.25rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #ff5228;
+}
+
+.veldar-badge-muted {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.05);
+  padding: 0.25rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-muted);
+}
+
+/* Shared Link with Arrow */
+.veldar-link-arrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #ff5228;
+  transition: all 0.2s ease;
+}
+
+.veldar-link-arrow:hover {
+  color: #ff6b2e;
+}
+
+.veldar-link-arrow svg {
+  transition: transform 0.2s ease;
+}
+
+.veldar-link-arrow:hover svg {
+  transform: translateX(3px);
+}
+
+/* Typography utility classes */
+.font-display {
+  font-family: "FlechaM-Medium", var(--font-poppins), "Poppins", sans-serif;
+}
+
+.font-poppins {
+  font-family: var(--font-poppins), "Poppins", sans-serif;
+}
+
+.font-inter {
+  font-family: var(--font-inter), "Inter", sans-serif;
 }
 
 html {
@@ -43,7 +242,16 @@ html {
 body {
   background: var(--color-bg);
   color: var(--color-body);
-  font-family: var(--font-ui);
+  font-family: var(--font-poppins), "Poppins", sans-serif;
+}
+
+h1, h2, h3, .heading-display {
+  font-family: "FlechaM-Medium", var(--font-poppins), "Poppins", sans-serif;
+  letter-spacing: -0.02em;
+}
+
+.meta-text, .badge-text, .mono-meta {
+  font-family: var(--font-inter), "Inter", sans-serif;
 }
 
 ::selection {
@@ -61,3 +269,4 @@ body {
     scroll-behavior: auto !important;
   }
 }
+

@@ -5,12 +5,13 @@
 // the full product reachable from the website (goal runner, workflow
 // history, account/tier settings) rather than a single demo page.
 
-import { Gauge, GearSix, ListChecks, Warning } from "@phosphor-icons/react";
+import { Gauge, GearSix, Lightning, ListChecks, Warning } from "@phosphor-icons/react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Nav } from "@/components/nav";
 import { useAuth } from "@/lib/auth-context";
+import { X402InspectorModal } from "@/components/x402-inspector-modal";
 
 const TABS = [
   { href: "/dashboard", label: "Overview", icon: Gauge },
@@ -22,6 +23,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
   const { user, loading, authError, clearAuthError } = useAuth();
   const pathname = usePathname();
   const router = useRouter();
+  const [isInspectorOpen, setIsInspectorOpen] = useState(false);
 
   // Send signed-out visitors to the real sign-in page rather than rendering
   // an inline gate — /signin offers both Google and email/password, and
@@ -60,9 +62,12 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
         )}
 
         <div className="mb-10 flex flex-wrap items-center justify-between gap-4 border-b border-[var(--color-border)] pb-6">
-          <nav className="flex gap-1 rounded-full border border-[var(--color-border)] bg-[var(--color-bg-elevated)] p-1.5 shadow-sm">
+          <nav className="relative z-10 flex gap-1 rounded-full border border-[var(--color-border)] bg-[var(--color-bg-elevated)] p-1.5 shadow-sm">
             {TABS.map((tab) => {
-              const active = pathname === tab.href;
+              const isOverview = tab.href === "/dashboard";
+              const active = isOverview
+                ? pathname === "/dashboard" || pathname === "/dashboard/"
+                : pathname === tab.href || (pathname?.startsWith(`${tab.href}/`) ?? false);
               const Icon = tab.icon;
               return (
                 <Link
@@ -70,7 +75,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
                   href={tab.href}
                   className={
                     active
-                      ? "flex items-center gap-1.5 rounded-full bg-[var(--color-accent)] px-4 py-2 text-xs font-semibold text-white shadow-sm"
+                      ? "btn-spectacular flex items-center gap-1.5 px-4 py-2 text-xs font-semibold"
                       : "flex items-center gap-1.5 rounded-full px-4 py-2 text-xs font-medium text-[var(--color-body)] transition-colors hover:text-[var(--color-headline)]"
                   }
                 >
@@ -82,6 +87,14 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
           </nav>
 
           <div className="flex items-center gap-3">
+            <button
+              onClick={() => setIsInspectorOpen(true)}
+              className="btn-spectacular flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold"
+            >
+              <Lightning size={14} weight="bold" />
+              <span>Inspect x402 Engine (Judge Demo)</span>
+            </button>
+
             <a
               href="https://dispenser.testnet.aws.algorand.network/"
               target="_blank"
@@ -92,7 +105,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
               <span className="rounded bg-amber-400/20 px-1.5 py-0.5 font-mono text-[10px] text-amber-200">Faucet</span>
             </a>
 
-            <div className="flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3.5 py-1.5 text-xs font-semibold text-emerald-300">
+            <div className="flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3.5 py-1.5 text-xs font-semibold text-emerald-300 font-inter">
               <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
               <span>Verified Session ({user.email?.slice(0, 14)}...)</span>
             </div>
@@ -100,7 +113,15 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
         </div>
 
         {children}
+
+        {/* Judge Demo x402 Payment Engine Inspector Modal */}
+        <X402InspectorModal
+          isOpen={isInspectorOpen}
+          onClose={() => setIsInspectorOpen(false)}
+          walletAddress={user.uid}
+        />
       </main>
     </>
   );
 }
+

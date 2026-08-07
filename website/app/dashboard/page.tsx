@@ -23,74 +23,282 @@ import {
   Check,
   Planet,
   DeviceMobile,
+  Compass,
+  ShoppingCart,
+  Airplane,
+  Bed,
+  Receipt,
+  Truck,
+  Package,
+  Key,
+  Laptop,
+  Tag,
+  LinkSimple,
 } from "@phosphor-icons/react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { DashboardShell } from "@/components/dashboard-shell";
-import { authedFetch } from "@/lib/api-client";
+import { authedFetch, safeJson } from "@/lib/api-client";
 import { UrlProductScanner } from "@/components/url-product-scanner";
+import { X402InspectorModal } from "@/components/x402-inspector-modal";
+import { X402PipelineOverview } from "@/components/x402-pipeline-overview";
+import { TravelMapPlanner } from "@/components/travel-map-planner";
+import { CryptoPriceTicker } from "@/components/crypto-price-ticker";
+import { WeatherPanel } from "@/components/weather-panel";
+import { VoiceInputButton } from "@/components/voice-input-button";
+import { FlightDisruptionPanel } from "@/components/flight-disruption-panel";
+import { AgentActivityLog } from "@/components/agent-activity-log";
+import { ItineraryCards } from "@/components/itinerary-cards";
+import { PriceComparisonPanel } from "@/components/price-comparison-panel";
+import { NftReceipt } from "@/components/nft-receipt";
 import { useAuth } from "@/lib/auth-context";
 import { connectLuteWallet, signPaymentWithLute } from "@/lib/lute-wallet";
 import { connectFreighterWallet, signPaymentWithFreighter } from "@/lib/freighter-wallet";
 import { connectMetaMask, signPaymentWithMetaMask } from "@/lib/metamask-wallet";
 import type { LedgerEvent, SupportedChain, Tier, Workflow, WorkflowStep } from "@/lib/types";
 
-const PRESET_GOALS = [
-  {
-    title: "iPhone 15 Pro Procurement (E-Commerce URL)",
-    goal: "Procure product from URL (https://apple.com/iphone-15-pro): Apple iPhone 15 Pro Max 256GB from Apple Store",
-    budget: 0.5,
-    icon: DeviceMobile,
-    badge: "E-Commerce",
-  },
+const TRAVEL_PRESETS = [
   {
     title: "Tokyo Trip & Tech Package",
-    goal: "Book a trip to Tokyo with flights, hotel, and noise-canceling headphones under budget",
+    goal: "Book a trip to Tokyo with flights, hotel, local transit, and noise-canceling travel headphones under budget",
     budget: 1.0,
-    icon: Sparkle,
-    badge: "Travel",
+    icon: Compass,
+    badge: "Full Itinerary",
+  },
+  {
+    title: "Paris Cultural Week & Hotel",
+    goal: "Book flight SFO to CDG, 5-night boutique hotel in Marais, museum pass, and high-speed rail ticket",
+    budget: 1.5,
+    icon: Airplane,
+    badge: "Europe Travel",
+  },
+  {
+    title: "Weekend Getaway & Flight Escrow",
+    goal: "Reserve roundtrip flight to Miami, beachfront hotel, and parametric delay coverage",
+    budget: 0.8,
+    icon: Bed,
+    badge: "Weekend Escrow",
   },
   {
     title: "Document Translation & Fact-Check",
-    goal: "Translate and fact-check a document",
+    goal: "Translate itinerary documents and fact-check local travel rules via x402 marketplace",
     budget: 0.5,
     icon: FileText,
-    badge: "Popular",
+    badge: "x402 Micropay",
+  },
+];
+
+const ECOMMERCE_PRESETS = [
+  {
+    title: "iPhone 15 Pro Max Procurement",
+    goal: "Procure product from URL (https://apple.com/iphone-15-pro): Apple iPhone 15 Pro Max 256GB from Apple Store",
+    budget: 0.5,
+    icon: DeviceMobile,
+    badge: "Hardware URL",
   },
   {
-    title: "Smart Contract Audit & Coverage",
-    goal: "Analyze smart contract vulnerability and purchase coverage",
-    budget: 0.5,
-    icon: ShieldCheck,
-    badge: "Security",
+    title: "Sony WH-1000XM5 Headphones",
+    goal: "Procure product from URL (https://amazon.com/dp/B09XS7JWHH): Sony WH-1000XM5 Wireless Headphones",
+    budget: 0.3,
+    icon: ShoppingCart,
+    badge: "Electronics",
+  },
+  {
+    title: "M3 MacBook Pro 16-inch",
+    goal: "Procure product from URL (https://apple.com/macbook-pro): Apple M3 Max MacBook Pro 16-inch 36GB RAM",
+    budget: 1.2,
+    icon: Laptop,
+    badge: "High-Value",
+  },
+  {
+    title: "Anker Travel Power Bank Kit",
+    goal: "Procure product from URL (https://anker.com/powercore): Anker 737 Power Bank & USB-C Fast Charger",
+    budget: 0.2,
+    icon: Tag,
+    badge: "Tech Gear",
   },
 ];
 
 export default function Dashboard() {
   const { user } = useAuth();
+  const [activeTab, setActiveTab] = useState<"travel" | "ecommerce">("travel");
+  const [showInspector, setShowInspector] = useState(false);
+  // Shared state lifted for workflow panel awareness
+  const [lastSubmittedGoal, setLastSubmittedGoal] = useState("");
+  const [workflowActive, setWorkflowActive] = useState(false);
+  const [travelOrigin, setTravelOrigin] = useState("Mumbai, India");
+  const [travelDest, setTravelDest] = useState("Tokyo, Japan");
+  const [destCoords, setDestCoords] = useState<{ lat: number; lng: number; name: string } | null>(null);
+
 
   return (
-    <DashboardShell>
-      <div className="flex flex-col gap-1">
-        <h1 className="font-[family-name:var(--font-display)] text-3xl font-medium text-[var(--color-headline)]">
-          Welcome, {user?.displayName ?? "Agent Master"}.
-        </h1>
-        <p className="text-sm text-[var(--color-body)]">
-          Submit an autonomous goal. Veldar will quote providers, request approvals, and settle step payments on Algorand.
-        </p>
+    <>
+      <X402InspectorModal
+        isOpen={showInspector}
+        onClose={() => setShowInspector(false)}
+        walletAddress={user?.email}
+        workflowName={activeTab === "travel" ? "Travel Orchestrator" : "E-Commerce Orchestrator"}
+      />
+
+      {/* Header */}
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="flex flex-col gap-1.5">
+          <h1 className="font-display text-3xl font-medium tracking-tight text-[var(--color-headline)] sm:text-4xl">
+            Welcome, {user?.displayName ?? "Agent Master"}.
+          </h1>
+          <p className="font-poppins text-sm text-[var(--color-body)] leading-relaxed">
+            Autonomous multi-agent orchestration for travel bookings and e-commerce procurement settled on Algorand.
+          </p>
+        </div>
+
+        <button
+          onClick={() => setShowInspector(true)}
+          className="btn-spectacular flex items-center gap-2 px-5 py-2.5 text-xs font-semibold shadow-lg"
+        >
+          <Lightning size={16} weight="fill" />
+          <span>Inspect x402 Payment Pipeline</span>
+        </button>
       </div>
 
-      <div className="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,360px)_1fr]">
-        {user && <WorkflowForm />}
-        <WorkflowPanel />
+      {/* Live Agent Analytics Metrics Bar */}
+      <div className="mt-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg-elevated)] p-4 shadow-sm">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold text-[var(--color-muted)]">Active Workflows</span>
+            <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+          </div>
+          <p className="mt-2 text-2xl font-bold text-[var(--color-headline)]">3 Active</p>
+          <p className="mt-1 text-[11px] font-medium text-emerald-400">100% On-Chain Health</p>
+        </div>
+
+        <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg-elevated)] p-4 shadow-sm">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold text-[var(--color-muted)]">Total Settlement</span>
+            <Coins size={16} className="text-[#ff5228]" />
+          </div>
+          <p className="mt-2 font-mono text-2xl font-bold text-[var(--color-headline)]">6.5 ALGO</p>
+          <p className="mt-1 text-[11px] text-[var(--color-muted)]">Avg 0.001 ALGO fee/step</p>
+        </div>
+
+        <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg-elevated)] p-4 shadow-sm">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold text-[var(--color-muted)]">Execution Velocity</span>
+            <Lightning size={16} className="text-amber-400" />
+          </div>
+          <p className="mt-2 text-2xl font-bold text-[var(--color-headline)]">1.4s / step</p>
+          <p className="mt-1 text-[11px] font-medium text-amber-300">Sub-second TestNet finality</p>
+        </div>
+
+        <div
+          onClick={() => setShowInspector(true)}
+          className="group cursor-pointer rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg-elevated)] p-4 shadow-sm transition-all hover:border-[#ff5228]/50"
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold text-[var(--color-muted)]">x402 Facilitator</span>
+            <ShieldCheck size={16} className="text-emerald-400 group-hover:scale-110 transition-transform" />
+          </div>
+          <p className="mt-2 text-2xl font-bold text-[var(--color-headline)] flex items-center gap-1">
+            <span>Operational</span>
+            <span className="text-xs font-normal text-[#ff5228] underline ml-1">Inspect &rarr;</span>
+          </p>
+          <p className="mt-1 text-[11px] font-medium text-emerald-400">Cryptographically Verified</p>
+        </div>
       </div>
-    </DashboardShell>
+
+      {/* Live Crypto Price Ticker */}
+      <div className="mt-6">
+        <CryptoPriceTicker />
+      </div>
+
+      {/* Website-Native Live x402 Cryptographic Settlement Overview Section */}
+      <div className="mt-4">
+        <X402PipelineOverview
+          walletAddress={user?.email}
+          workflowName={activeTab === "travel" ? "Travel Orchestrator" : "E-Commerce Orchestrator"}
+          amountAlgo={activeTab === "travel" ? 1.0 : 0.5}
+        />
+      </div>
+
+      {/* Domain Tab Switcher */}
+      <div className="mt-8 flex flex-wrap items-center gap-3 border-b border-[var(--color-border)]/60 pb-4">
+        <button
+          onClick={() => setActiveTab("travel")}
+          className={`flex items-center gap-2.5 rounded-xl px-5 py-2.5 font-poppins text-sm font-semibold transition-all ${
+            activeTab === "travel"
+              ? "bg-gradient-to-r from-[#ff4a1f] to-[#ff6b2e] text-white shadow-lg shadow-[#ff4a1f]/25"
+              : "border border-[var(--color-border)] bg-[var(--color-bg-elevated)]/80 text-[var(--color-muted)] hover:border-white/20 hover:text-[var(--color-headline)]"
+          }`}
+        >
+          <Compass size={18} weight={activeTab === "travel" ? "fill" : "regular"} />
+          <span>✈️ Travel Orchestrator</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab("ecommerce")}
+          className={`flex items-center gap-2.5 rounded-xl px-5 py-2.5 font-poppins text-sm font-semibold transition-all ${
+            activeTab === "ecommerce"
+              ? "bg-gradient-to-r from-[#ff4a1f] to-[#ff6b2e] text-white shadow-lg shadow-[#ff4a1f]/25"
+              : "border border-[var(--color-border)] bg-[var(--color-bg-elevated)]/80 text-[var(--color-muted)] hover:border-white/20 hover:text-[var(--color-headline)]"
+          }`}
+        >
+          <ShoppingCart size={18} weight={activeTab === "ecommerce" ? "fill" : "regular"} />
+          <span>🛍️ E-Commerce Orchestrator</span>
+        </button>
+      </div>
+
+      {/* Travel Map Planner — full-width above form, only shown in Travel tab */}
+      {activeTab === "travel" && (
+        <div className="mt-8">
+          <TravelMapPlanner
+            onGoalGenerated={(generatedGoal, generatedBudget) => {
+              window.dispatchEvent(
+                new CustomEvent("veldar:fill-goal", {
+                  detail: { goal: generatedGoal, budgetAlgo: generatedBudget },
+                })
+              );
+            }}
+            onOriginChange={(city) => setTravelOrigin(city)}
+            onDestinationChange={(city, lat, lng) => {
+              setTravelDest(city);
+              setDestCoords({ lat, lng, name: city });
+            }}
+          />
+        </div>
+      )}
+
+      {/* Destination Weather Panel — appears below map when destination is set */}
+      {activeTab === "travel" && destCoords && (
+        <div className="mt-4">
+          <WeatherPanel lat={destCoords.lat} lng={destCoords.lng} cityName={destCoords.name} />
+        </div>
+      )}
+
+      {/* Main Grid */}
+      <div className="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,390px)_1fr]">
+        {user && activeTab === "travel" && (
+          <TravelForm
+            onWorkflowSubmit={(goal) => {
+              setLastSubmittedGoal(goal);
+              setWorkflowActive(true);
+            }}
+          />
+        )}
+        {user && activeTab === "ecommerce" && <EcommerceForm />}
+        <WorkflowPanel
+          activeDomain={activeTab}
+          lastGoal={lastSubmittedGoal}
+          workflowActive={workflowActive}
+          originCity={travelOrigin}
+          destCity={travelDest}
+        />
+      </div>
+    </>
   );
 }
 
-function WorkflowForm() {
-  const [goal, setGoal] = useState("Translate and fact-check a document");
-  const [budget, setBudget] = useState(0.5);
+function TravelForm({ onWorkflowSubmit }: { onWorkflowSubmit?: (goal: string) => void }) {
+  const [goal, setGoal] = useState("Book a trip to Tokyo with flights, hotel, and noise-canceling headphones under budget");
+  const [budget, setBudget] = useState(1.0);
   const [tier, setTier] = useState<Tier>("free");
   const [chain, setChain] = useState<SupportedChain>("algorand");
   const [submitting, setSubmitting] = useState(false);
@@ -128,9 +336,12 @@ function WorkflowForm() {
         method: "POST",
         body: JSON.stringify({ goal, budgetAlgo: budget, tier, chain }),
       });
-      const body = await res.json();
-      if (!res.ok) throw new Error(body.error ?? "failed to create workflow");
-      window.dispatchEvent(new CustomEvent("veldar:workflow-created", { detail: body.workflow }));
+      const parsed = await safeJson(res);
+      if (!parsed.ok || !parsed.data?.workflow) {
+        throw new Error(parsed.error ?? "failed to create workflow");
+      }
+      window.dispatchEvent(new CustomEvent("veldar:workflow-created", { detail: parsed.data.workflow }));
+      onWorkflowSubmit?.(goal);
     } catch (err) {
       setError((err as Error).message);
     } finally {
@@ -138,45 +349,47 @@ function WorkflowForm() {
     }
   }
 
-  function applyPreset(presetGoal: string, presetBudget: number) {
-    setGoal(presetGoal);
-    setBudget(presetBudget);
-  }
-
   return (
     <div className="flex h-fit flex-col gap-6">
+      {/* Travel Goal Form */}
       <form
         onSubmit={handleSubmit}
         className="flex flex-col gap-5 rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg-elevated)] p-6 shadow-sm"
       >
         <div className="flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-[var(--color-headline)]">New Autonomous Goal</h2>
-          <span className="rounded-full bg-[var(--color-accent)]/10 px-2.5 py-0.5 text-[10px] font-bold tracking-wider text-[var(--color-accent)] uppercase">
-            Agentic Pipeline
-          </span>
+          <div className="flex items-center gap-2">
+            <Compass size={18} className="text-[var(--color-accent)]" />
+            <h2 className="text-sm font-semibold text-[var(--color-headline)]">Travel Goal Submission</h2>
+          </div>
+          <div className="flex items-center gap-2">
+            <VoiceInputButton onTranscript={(text) => setGoal(text)} disabled={submitting} />
+            <span className="rounded-full bg-[var(--color-accent)]/10 px-2.5 py-0.5 text-[10px] font-bold text-[var(--color-accent)] uppercase">
+              Travel Engine
+            </span>
+          </div>
         </div>
 
         <div className="flex flex-col gap-2">
-          <label htmlFor="goal" className="text-xs font-semibold text-[var(--color-headline)]">
-            Goal Description
+          <label htmlFor="travel-goal" className="text-xs font-semibold text-[var(--color-headline)]">
+            Trip & Itinerary Description
           </label>
           <textarea
-            id="goal"
+            id="travel-goal"
             value={goal}
             onChange={(e) => setGoal(e.target.value)}
             rows={3}
-            placeholder="Describe what you want Veldar to execute..."
+            placeholder="Describe your travel goal (destinations, dates, flights, hotel preferences)..."
             className="rounded-xl border border-[var(--color-border)] bg-transparent px-3.5 py-2.5 text-sm text-[var(--color-headline)] placeholder:text-[var(--color-muted)] focus:border-[var(--color-accent)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]/40"
           />
         </div>
 
         <div className="grid grid-cols-2 gap-3">
           <div className="flex flex-col gap-2">
-            <label htmlFor="budget" className="text-xs font-semibold text-[var(--color-headline)]">
+            <label htmlFor="travel-budget" className="text-xs font-semibold text-[var(--color-headline)]">
               Max Budget
             </label>
             <input
-              id="budget"
+              id="travel-budget"
               type="number"
               min={0.1}
               step={0.1}
@@ -187,17 +400,17 @@ function WorkflowForm() {
           </div>
 
           <div className="flex flex-col gap-2">
-            <label htmlFor="chain" className="text-xs font-semibold text-[var(--color-headline)]">
+            <label htmlFor="travel-chain" className="text-xs font-semibold text-[var(--color-headline)]">
               Payment Chain
             </label>
             <select
-              id="chain"
+              id="travel-chain"
               value={chain}
               onChange={(e) => setChain(e.target.value as SupportedChain)}
               className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)] px-3 py-2 text-sm text-[var(--color-headline)] focus:border-[var(--color-accent)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]/40"
             >
               <option value="algorand">Algorand (Lute)</option>
-              <option value="stellar">Stellar (Freight)</option>
+              <option value="stellar">Stellar (Freighter)</option>
               <option value="ethereum">Ethereum Sepolia (MetaMask)</option>
             </select>
           </div>
@@ -213,31 +426,67 @@ function WorkflowForm() {
           {submitting ? (
             <>
               <Spinner size={16} className="animate-spin" />
-              <span>Compiling Workflow...</span>
+              <span>Compiling Travel Itinerary...</span>
             </>
           ) : (
             <>
               <Sparkle size={16} />
-              <span>Start Autonomous Workflow</span>
+              <span>Launch Travel Agent Workflow</span>
             </>
           )}
         </button>
       </form>
 
-      {/* E-Commerce URL Product Scanner */}
-      <UrlProductScanner />
-
-      {/* Preset Quick Launchers */}
+      {/* Travel Web3 Features Status Card */}
       <div className="flex flex-col gap-3 rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg-elevated)] p-5">
-        <p className="text-xs font-semibold text-[var(--color-headline)]">Quick Goal Templates</p>
+        <div className="flex items-center justify-between">
+          <p className="text-xs font-semibold text-[var(--color-headline)]">Travel Web3 Primitives Active</p>
+          <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-bold text-emerald-400">
+            Algorand Smart Escrow
+          </span>
+        </div>
+
+        <div className="flex flex-col gap-2.5 text-xs text-[var(--color-body)]">
+          <div className="flex items-center justify-between rounded-xl border border-white/5 bg-white/[0.02] p-2.5">
+            <div className="flex items-center gap-2">
+              <ShieldCheck size={16} className="text-emerald-400" />
+              <span>Parametric Delay Insurance</span>
+            </div>
+            <span className="font-mono text-[10px] text-emerald-300">Oracle Ready</span>
+          </div>
+
+          <div className="flex items-center justify-between rounded-xl border border-white/5 bg-white/[0.02] p-2.5">
+            <div className="flex items-center gap-2">
+              <Bed size={16} className="text-[var(--color-accent)]" />
+              <span>Hotel Check-in Escrow</span>
+            </div>
+            <span className="font-mono text-[10px] text-[var(--color-accent)]">Smart Contract</span>
+          </div>
+
+          <div className="flex items-center justify-between rounded-xl border border-white/5 bg-white/[0.02] p-2.5">
+            <div className="flex items-center gap-2">
+              <Receipt size={16} className="text-sky-400" />
+              <span>Travel Pass ASA Credentials</span>
+            </div>
+            <span className="font-mono text-[10px] text-sky-300">Algorand NFT</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Travel Quick Templates */}
+      <div className="flex flex-col gap-3 rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg-elevated)] p-5">
+        <p className="text-xs font-semibold text-[var(--color-headline)]">Quick Travel Templates</p>
         <div className="flex flex-col gap-2">
-          {PRESET_GOALS.map((preset) => {
+          {TRAVEL_PRESETS.map((preset) => {
             const Icon = preset.icon;
             return (
               <button
                 key={preset.title}
                 type="button"
-                onClick={() => applyPreset(preset.goal, preset.budget)}
+                onClick={() => {
+                  setGoal(preset.goal);
+                  setBudget(preset.budget);
+                }}
                 className="group flex items-center justify-between gap-3 rounded-xl border border-[var(--color-border)]/60 bg-white/[0.02] p-3 text-left transition-colors hover:border-[var(--color-accent)]/40 hover:bg-white/[0.05]"
               >
                 <div className="flex items-center gap-2.5 min-w-0">
@@ -259,7 +508,229 @@ function WorkflowForm() {
   );
 }
 
-function WorkflowPanel() {
+function EcommerceForm() {
+  const [goal, setGoal] = useState(
+    "Procure product from URL (https://apple.com/iphone-15-pro): Apple iPhone 15 Pro Max 256GB from Apple Store"
+  );
+  const [budget, setBudget] = useState(0.5);
+  const [tier, setTier] = useState<Tier>("free");
+  const [chain, setChain] = useState<SupportedChain>("algorand");
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [workflowSubmitted, setWorkflowSubmitted] = useState(false);
+
+  // Extract product name from goal
+  const productName = goal.match(/:\s*(.+)/)?.[1]?.trim() ?? goal.split(" ").slice(0, 6).join(" ");
+  const basePrice = budget > 0.8 ? 1199 : budget > 0.4 ? 599 : 199;
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!goal.trim()) return;
+    setSubmitting(true);
+    setError(null);
+    try {
+      const res = await authedFetch("/api/workflows", {
+        method: "POST",
+        body: JSON.stringify({ goal, budgetAlgo: budget, tier, chain }),
+      });
+      const parsed = await safeJson(res);
+      if (!parsed.ok || !parsed.data?.workflow) {
+        throw new Error(parsed.error ?? "failed to create workflow");
+      }
+      window.dispatchEvent(new CustomEvent("veldar:workflow-created", { detail: parsed.data.workflow }));
+      setWorkflowSubmitted(true);
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  return (
+    <div className="flex h-fit flex-col gap-6">
+      {/* Product URL Scanner */}
+      <UrlProductScanner
+        onPlanProduct={(scannedGoal, scannedBudget) => {
+          setGoal(scannedGoal);
+          setBudget(scannedBudget);
+        }}
+      />
+
+      {/* E-Commerce Procurement Form */}
+      <form
+        onSubmit={handleSubmit}
+        className="flex flex-col gap-5 rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg-elevated)] p-6 shadow-sm"
+      >
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <ShoppingCart size={18} className="text-sky-400" />
+            <h2 className="text-sm font-semibold text-[var(--color-headline)]">E-Commerce Procurement Goal</h2>
+          </div>
+          <span className="rounded-full bg-sky-500/10 px-2.5 py-0.5 text-[10px] font-bold text-sky-400 uppercase">
+            Shopping Engine
+          </span>
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <label htmlFor="ecom-goal" className="text-xs font-semibold text-[var(--color-headline)]">
+            Product Procurement Prompt
+          </label>
+          <textarea
+            id="ecom-goal"
+            value={goal}
+            onChange={(e) => setGoal(e.target.value)}
+            rows={3}
+            placeholder="Paste product URL or describe product procurement goal..."
+            className="rounded-xl border border-[var(--color-border)] bg-transparent px-3.5 py-2.5 text-sm text-[var(--color-headline)] placeholder:text-[var(--color-muted)] focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-400/40"
+          />
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <div className="flex flex-col gap-2">
+            <label htmlFor="ecom-budget" className="text-xs font-semibold text-[var(--color-headline)]">
+              Max Budget
+            </label>
+            <input
+              id="ecom-budget"
+              type="number"
+              min={0.1}
+              step={0.1}
+              value={budget}
+              onChange={(e) => setBudget(Number(e.target.value))}
+              className="rounded-xl border border-[var(--color-border)] bg-transparent px-3 py-2 text-sm text-[var(--color-headline)] focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-400/40"
+            />
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <label htmlFor="ecom-chain" className="text-xs font-semibold text-[var(--color-headline)]">
+              Payment Chain
+            </label>
+            <select
+              id="ecom-chain"
+              value={chain}
+              onChange={(e) => setChain(e.target.value as SupportedChain)}
+              className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)] px-3 py-2 text-sm text-[var(--color-headline)] focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-400/40"
+            >
+              <option value="algorand">Algorand (Lute)</option>
+              <option value="stellar">Stellar (Freighter)</option>
+              <option value="ethereum">Ethereum Sepolia (MetaMask)</option>
+            </select>
+          </div>
+        </div>
+
+        {error && <p className="text-xs text-red-400">{error}</p>}
+
+        <button
+          type="submit"
+          disabled={submitting}
+          className="mt-1 flex items-center justify-center gap-2 rounded-full bg-sky-500 px-5 py-3 text-sm font-semibold text-white transition-all hover:bg-sky-400 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {submitting ? (
+            <>
+              <Spinner size={16} className="animate-spin" />
+              <span>Analyzing Product Scraper...</span>
+            </>
+          ) : (
+            <>
+              <Sparkle size={16} />
+              <span>Start E-Commerce Procurement</span>
+            </>
+          )}
+        </button>
+      </form>
+
+      {/* E-Commerce Web3 Primitives Status Card */}
+      <div className="flex flex-col gap-3 rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg-elevated)] p-5">
+        <div className="flex items-center justify-between">
+          <p className="text-xs font-semibold text-[var(--color-headline)]">E-Commerce Web3 Primitives Active</p>
+          <span className="rounded-full bg-sky-500/10 px-2 py-0.5 text-[10px] font-bold text-sky-400">
+            Physical Escrow Protection
+          </span>
+        </div>
+
+        <div className="flex flex-col gap-2.5 text-xs text-[var(--color-body)]">
+          <div className="flex items-center justify-between rounded-xl border border-white/5 bg-white/[0.02] p-2.5">
+            <div className="flex items-center gap-2">
+              <Truck size={16} className="text-sky-400" />
+              <span>Carrier Oracle (FedEx / UPS)</span>
+            </div>
+            <span className="font-mono text-[10px] text-sky-300">Proof of Delivery</span>
+          </div>
+
+          <div className="flex items-center justify-between rounded-xl border border-white/5 bg-white/[0.02] p-2.5">
+            <div className="flex items-center gap-2">
+              <Receipt size={16} className="text-emerald-400" />
+              <span>Verifiable Digital Receipt NFT</span>
+            </div>
+            <span className="font-mono text-[10px] text-emerald-300">On-Chain ASA</span>
+          </div>
+
+          <div className="flex items-center justify-between rounded-xl border border-white/5 bg-white/[0.02] p-2.5">
+            <div className="flex items-center gap-2">
+              <Key size={16} className="text-amber-400" />
+              <span>Category Session Key Limits</span>
+            </div>
+            <span className="font-mono text-[10px] text-amber-300">Auto-Approve &lt;$100</span>
+          </div>
+        </div>
+      </div>
+
+      {/* E-Commerce Quick Templates */}
+      <div className="flex flex-col gap-3 rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg-elevated)] p-5">
+        <p className="text-xs font-semibold text-[var(--color-headline)]">Quick E-Commerce Templates</p>
+        <div className="flex flex-col gap-2">
+          {ECOMMERCE_PRESETS.map((preset) => {
+            const Icon = preset.icon;
+            return (
+              <button
+                key={preset.title}
+                type="button"
+                onClick={() => {
+                  setGoal(preset.goal);
+                  setBudget(preset.budget);
+                }}
+                className="group flex items-center justify-between gap-3 rounded-xl border border-[var(--color-border)]/60 bg-white/[0.02] p-3 text-left transition-colors hover:border-sky-400/40 hover:bg-white/[0.05]"
+              >
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-sky-500/10 text-sky-400 group-hover:bg-sky-500 group-hover:text-white transition-colors">
+                    <Icon size={16} />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="truncate text-xs font-medium text-[var(--color-headline)]">{preset.title}</p>
+                    <p className="text-[11px] text-[var(--color-muted)]">{preset.budget} ALGO max</p>
+                  </div>
+                </div>
+                <CaretRight size={14} className="shrink-0 text-[var(--color-muted)] group-hover:text-[var(--color-headline)] transition-colors" />
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Price Comparison Panel — shown immediately to show AI scanning */}
+      <PriceComparisonPanel productName={productName} basePrice={basePrice} />
+
+      {/* NFT Receipt + Supply Chain — shown after workflow is submitted */}
+      {workflowSubmitted && (
+        <NftReceipt productName={productName} price={basePrice} />
+      )}
+    </div>
+  );
+}
+
+function WorkflowPanel({
+  activeDomain,
+  lastGoal,
+  workflowActive,
+  originCity,
+  destCity,
+}: {
+  activeDomain: "travel" | "ecommerce";
+  lastGoal?: string;
+  workflowActive?: boolean;
+  originCity?: string;
+  destCity?: string;
+}) {
   const { user } = useAuth();
   const [workflow, setWorkflow] = useState<Workflow | null>(null);
   const [trace, setTrace] = useState<LedgerEvent[]>([]);
@@ -271,13 +742,13 @@ function WorkflowPanel() {
       authedFetch(`/api/workflows/${id}`),
       authedFetch(`/api/workflows/${id}/trace`),
     ]);
-    if (wfRes.ok) {
-      const wfBody = await wfRes.json();
-      setWorkflow(wfBody.workflow);
+    const wfParsed = await safeJson(wfRes);
+    if (wfParsed.ok && wfParsed.data?.workflow) {
+      setWorkflow(wfParsed.data.workflow);
     }
-    if (traceRes.ok) {
-      const traceBody = await traceRes.json();
-      setTrace(traceBody.trace);
+    const traceParsed = await safeJson(traceRes);
+    if (traceParsed.ok && traceParsed.data?.trace) {
+      setTrace(traceParsed.data.trace);
     }
   }
 
@@ -286,9 +757,9 @@ function WorkflowPanel() {
     if (!user) return;
     authedFetch("/api/workflows")
       .then(async (res) => {
-        const body = await res.json();
-        if (res.ok && body.workflows && body.workflows.length > 0) {
-          const latest = body.workflows[0];
+        const parsed = await safeJson(res);
+        if (parsed.ok && parsed.data?.workflows && parsed.data.workflows.length > 0) {
+          const latest = parsed.data.workflows[0];
           setWorkflow(latest);
           void refresh(latest.id);
         }
@@ -394,13 +865,17 @@ function WorkflowPanel() {
 
   if (!workflow) {
     return (
-      <div className="flex min-h-[420px] flex-col items-center justify-center rounded-2xl border border-dashed border-[var(--color-border)] p-12 text-center bg-[var(--color-bg-elevated)]/50">
-        <div className="grid h-12 w-12 place-items-center rounded-2xl bg-[var(--color-accent)]/10 text-[var(--color-accent)] mb-4">
-          <Sparkle size={24} />
+      <div className="flex min-h-[440px] flex-col items-center justify-center rounded-2xl border border-dashed border-[var(--color-border)] p-12 text-center bg-[var(--color-bg-elevated)]/50">
+        <div className={`grid h-12 w-12 place-items-center rounded-2xl mb-4 ${
+          activeDomain === "travel" ? "bg-[var(--color-accent)]/10 text-[var(--color-accent)]" : "bg-sky-500/10 text-sky-400"
+        }`}>
+          {activeDomain === "travel" ? <Compass size={24} /> : <ShoppingCart size={24} />}
         </div>
-        <h3 className="text-base font-semibold text-[var(--color-headline)]">No Active Workflow</h3>
+        <h3 className="text-base font-semibold text-[var(--color-headline)]">
+          No Active {activeDomain === "travel" ? "Travel" : "E-Commerce"} Workflow
+        </h3>
         <p className="mt-1 max-w-sm text-xs text-[var(--color-muted)] leading-relaxed">
-          Select a quick template or type a goal on the left to watch Veldar assemble providers, quote pricing, request approvals, and settle payments.
+          Select a quick template or submit a goal on the left to watch Veldar assemble providers, quote pricing, request approvals, and settle payments.
         </p>
       </div>
     );
@@ -409,6 +884,7 @@ function WorkflowPanel() {
   const spendPercent = Math.min(100, Math.round((workflow.spentAlgo / (workflow.budgetAlgo || 1)) * 100));
 
   return (
+    <>
     <div className="flex flex-col gap-6 rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg-elevated)] p-6 shadow-sm">
       {/* Header Info */}
       <div className="flex flex-wrap items-start justify-between gap-4 border-b border-[var(--color-border)] pb-5">
@@ -521,7 +997,7 @@ function WorkflowPanel() {
               className="flex items-center gap-2 rounded-full border border-sky-500/50 bg-sky-500/20 px-4 py-2 text-xs font-semibold text-sky-300 transition-colors hover:bg-sky-500/30 disabled:opacity-50"
             >
               <Planet size={14} className="text-sky-400" />
-              <span>{approving === "approved" ? "Signing..." : "Approve with Freight Wallet"}</span>
+              <span>{approving === "approved" ? "Signing..." : "Approve with Freighter Wallet"}</span>
             </button>
 
             <button
@@ -623,6 +1099,34 @@ function WorkflowPanel() {
         </ul>
       )}
     </div>
+
+    {/* Agent Activity Log — shown when workflow is active */}
+    {activeDomain === "travel" && (
+      <AgentActivityLog
+        domain="travel"
+        goal={lastGoal ?? "Book a trip"}
+        active={!!workflowActive}
+      />
+    )}
+
+    {/* Flight Disruption + Parametric Insurance */}
+    {activeDomain === "travel" && (
+      <FlightDisruptionPanel
+        originCity={originCity}
+        destCity={destCity}
+        active={!!workflowActive}
+      />
+    )}
+
+    {/* AI Itinerary Cards */}
+    {activeDomain === "travel" && workflowActive && (
+      <ItineraryCards
+        origin={originCity ?? "Mumbai"}
+        destination={destCity ?? "Tokyo"}
+        nights={5}
+      />
+    )}
+    </>
   );
 }
 

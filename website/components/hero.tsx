@@ -1,56 +1,86 @@
-import { ArrowRight } from "@phosphor-icons/react/dist/ssr";
+"use client";
+
+import { Check } from "@phosphor-icons/react";
+import Link from "next/link";
 import { TracePreview } from "./trace-preview";
 
 export function Hero() {
   return (
-    <section className="relative overflow-hidden pt-16 pb-20 lg:pb-28">
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -right-40 -top-40 h-[520px] w-[520px] rounded-full opacity-20 blur-[120px]"
-        style={{ background: "linear-gradient(135deg, var(--color-card-from), var(--color-card-to))" }}
-      />
-
-      <div className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-12 px-6 lg:grid-cols-2 lg:gap-8 lg:px-8">
-        <div>
-          <div className="mb-6 flex flex-wrap items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-[var(--color-border)] bg-white/5 px-3 py-1 text-xs font-medium text-[var(--color-headline)]">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400"></span>
-              Algorand TestNet
+    <section className="relative pt-12 pb-24 lg:pt-20 lg:pb-36">
+      <div className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-14 px-6 lg:grid-cols-12 lg:gap-12 lg:px-8">
+        {/* Left Column: Top SaaS Typography & Action Bar */}
+        <div className="lg:col-span-7">
+          {/* High-Contrast Stacked Display Serif Headline */}
+          <h1 className="font-display text-5xl font-normal leading-[1.04] tracking-tight text-[var(--color-headline)] sm:text-6xl md:text-7xl lg:text-[5.25rem]">
+            Your Goals.<br />
+            Your Payments.<br />
+            <span className="bg-gradient-to-r from-white via-white to-[#c9c5bf] bg-clip-text text-transparent">
+              Your Agent.
             </span>
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-[var(--color-border)] bg-white/5 px-3 py-1 text-xs font-medium text-[var(--color-body)]">
-              x402 Micropayments
-            </span>
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-[var(--color-border)] bg-white/5 px-3 py-1 text-xs font-medium text-[var(--color-body)]">
-              Budget Enforced
-            </span>
-          </div>
-
-          <h1 className="font-[family-name:var(--font-display)] text-4xl font-medium leading-[1.05] tracking-tight text-[var(--color-headline)] md:text-5xl lg:text-6xl">
-            An agent that spends carefully.
           </h1>
-          <p className="mt-6 max-w-[46ch] text-lg leading-relaxed text-[var(--color-body)]">
-            Give Veldar a goal. It shops a marketplace of paid services, pays each one in small
-            Algorand transfers, and shows you everything before it&apos;s final.
+
+          {/* Sub-headline */}
+          <p className="mt-7 max-w-[50ch] text-base leading-relaxed text-[var(--color-body)] md:text-xl font-normal">
+            Give Veldar a goal. It shops a marketplace of paid services, executes instant
+            x402 micropayments, and keeps budgets and approvals 100% visible before anything is final.
           </p>
 
-          <div className="mt-8 flex flex-wrap items-center gap-4">
-            <a
-              href="#pricing"
-              className="inline-flex items-center gap-2 rounded-full bg-[var(--color-cta)] px-6 py-3.5 text-sm font-semibold text-white transition-all hover:bg-[var(--color-cta-hover)] active:scale-[0.98]"
-            >
-              Get started
-              <ArrowRight size={16} weight="bold" />
-            </a>
-            <a
-              href="#how-it-works"
-              className="inline-flex items-center gap-2 rounded-full border border-[var(--color-border)] px-6 py-3.5 text-sm font-semibold text-[var(--color-headline)] transition-colors hover:border-[var(--color-headline)]/40"
-            >
-              See how it works
-            </a>
+          {/* Checklist Grid */}
+          <div className="mt-9 grid grid-cols-1 gap-4 sm:grid-cols-2 max-w-xl">
+            <div className="flex items-center gap-3">
+              <div className="grid h-6 w-6 shrink-0 place-items-center rounded-full border border-[#ff5228]/80 bg-[#ff5228]/15 text-[#ff5228] shadow-[0_0_10px_rgba(255,82,40,0.3)]">
+                <Check size={13} weight="bold" />
+              </div>
+              <span className="text-sm md:text-base font-medium text-[var(--color-headline)]">Earn with every purchase</span>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <div className="grid h-6 w-6 shrink-0 place-items-center rounded-full border border-[#ff5228]/80 bg-[#ff5228]/15 text-[#ff5228] shadow-[0_0_10px_rgba(255,82,40,0.3)]">
+                <Check size={13} weight="bold" />
+              </div>
+              <span className="text-sm md:text-base font-medium text-[var(--color-headline)]">Instant x402 micropayments</span>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <div className="grid h-6 w-6 shrink-0 place-items-center rounded-full border border-[#ff5228]/80 bg-[#ff5228]/15 text-[#ff5228] shadow-[0_0_10px_rgba(255,82,40,0.3)]">
+                <Check size={13} weight="bold" />
+              </div>
+              <span className="text-sm md:text-base font-medium text-[var(--color-headline)]">Strict budget enforcement</span>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <div className="grid h-6 w-6 shrink-0 place-items-center rounded-full border border-[#ff5228]/80 bg-[#ff5228]/15 text-[#ff5228] shadow-[0_0_10px_rgba(255,82,40,0.3)]">
+                <Check size={13} weight="bold" />
+              </div>
+              <span className="text-sm md:text-base font-medium text-[var(--color-headline)]">No hidden fees</span>
+            </div>
           </div>
+
+          {/* Luxury SaaS Action Bar */}
+          <div className="mt-10 flex max-w-lg items-center gap-2 rounded-full border border-white/15 bg-white/[0.04] p-2 shadow-2xl backdrop-blur-2xl transition-all focus-within:border-[#ff5228]/60 focus-within:ring-2 focus-within:ring-[#ff5228]/20">
+            <input
+              type="email"
+              placeholder="Your email address or goal..."
+              className="w-full bg-transparent px-5 py-3 text-sm text-[var(--color-headline)] placeholder:text-[var(--color-muted)] outline-none"
+            />
+            <Link href="/dashboard" className="btn-spectacular shrink-0 px-7 py-3.5 text-sm font-semibold whitespace-nowrap shadow-lg">
+              Join Waitlist
+            </Link>
+          </div>
+
+          <p className="mt-3.5 text-xs text-[var(--color-footer-dim)] pl-2">
+            * Instant settlement powered by Algorand TestNet &amp; Stellar x402 protocol.
+          </p>
         </div>
 
-        <TracePreview />
+        {/* Right Column: Hero Centerpiece Showcase Card */}
+        <div className="lg:col-span-5 lg:pl-2">
+          <div className="relative rounded-[2.5rem] border border-white/15 bg-gradient-to-b from-white/10 via-white/[0.03] to-transparent p-1.5 shadow-[0_30px_90px_rgba(0,0,0,0.85),_0_0_50px_rgba(255,82,40,0.22)] backdrop-blur-2xl">
+            <div className="rounded-[2.2rem] bg-[#0c0a09]/95 p-6 lg:p-8">
+              <TracePreview />
+            </div>
+          </div>
+        </div>
       </div>
     </section>
   );

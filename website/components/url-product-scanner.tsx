@@ -69,22 +69,22 @@ export function UrlProductScanner({ onPlanProduct }: UrlProductScannerProps) {
   }
 
   return (
-    <div className="flex flex-col gap-4 rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg-elevated)] p-6 shadow-sm">
+    <div className="flex flex-col gap-4 rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg-elevated)] p-6 shadow-md">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className="grid h-8 w-8 place-items-center rounded-xl bg-sky-500/10 text-sky-400">
+          <div className="grid h-8 w-8 place-items-center rounded-xl bg-[var(--color-cta)]/10 text-[var(--color-cta)]">
             <LinkSimple size={18} weight="bold" />
           </div>
           <div>
-            <h3 className="text-sm font-semibold text-[var(--color-headline)]">
+            <h3 className="font-display text-sm font-semibold text-[var(--color-headline)]">
               E-Commerce Product URL Scanner
             </h3>
-            <p className="text-[11px] text-[var(--color-muted)]">
+            <p className="font-poppins text-[11px] text-[var(--color-muted)]">
               Paste any product URL (Smartphones, Travel Tech, Gear) for instant autonomous procurement
             </p>
           </div>
         </div>
-        <span className="rounded-full bg-sky-500/10 px-2.5 py-0.5 text-[10px] font-bold text-sky-400 uppercase tracking-wider">
+        <span className="font-inter rounded-full bg-[var(--color-cta)]/10 px-2.5 py-0.5 text-[10px] font-bold text-[var(--color-cta)] uppercase tracking-wider">
           URL Auto-Discovery
         </span>
       </div>
@@ -98,7 +98,7 @@ export function UrlProductScanner({ onPlanProduct }: UrlProductScannerProps) {
             onChange={(e) => setInputUrl(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleScan()}
             placeholder="Paste product link (e.g. https://www.apple.com/shop/buy-iphone/...)"
-            className="w-full rounded-xl border border-[var(--color-border)] bg-transparent py-2.5 pl-3.5 pr-10 text-xs text-[var(--color-headline)] placeholder:text-[var(--color-muted)] focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-400/30"
+            className="font-poppins w-full rounded-xl border border-[var(--color-border)] bg-black/20 py-2.5 pl-3.5 pr-10 text-xs text-[var(--color-headline)] placeholder:text-[var(--color-muted)] focus:border-[var(--color-cta)] focus:outline-none focus:ring-2 focus:ring-[var(--color-cta)]/30 transition-all"
           />
           {inputUrl && (
             <button
@@ -116,7 +116,7 @@ export function UrlProductScanner({ onPlanProduct }: UrlProductScannerProps) {
         <button
           onClick={() => handleScan()}
           disabled={!inputUrl.trim() || analyzing}
-          className="flex items-center gap-1.5 rounded-xl bg-sky-500 px-4 py-2.5 text-xs font-semibold text-white transition-all hover:bg-sky-400 active:scale-[0.98] disabled:opacity-50"
+          className="font-poppins flex items-center gap-1.5 rounded-xl bg-[var(--color-cta)] px-4 py-2.5 text-xs font-semibold text-white transition-all hover:bg-[var(--color-cta-hover)] active:scale-[0.98] disabled:opacity-50 shadow-sm shadow-[var(--color-cta)]/20"
         >
           {analyzing ? (
             <span>Extracting...</span>
@@ -131,7 +131,7 @@ export function UrlProductScanner({ onPlanProduct }: UrlProductScannerProps) {
 
       {/* Preset sample buttons */}
       <div className="flex flex-wrap items-center gap-2">
-        <span className="text-[11px] font-medium text-[var(--color-muted)]">Try pasting:</span>
+        <span className="font-inter text-[11px] font-medium text-[var(--color-muted)]">Try pasting:</span>
         {SAMPLE_URLS.map((sample) => (
           <button
             key={sample.label}
@@ -139,7 +139,7 @@ export function UrlProductScanner({ onPlanProduct }: UrlProductScannerProps) {
               setInputUrl(sample.url);
               handleScan(sample.url);
             }}
-            className="rounded-full border border-[var(--color-border)] bg-white/[0.02] px-3 py-1 text-[11px] font-medium text-[var(--color-body)] transition-colors hover:border-sky-400/40 hover:bg-sky-500/10 hover:text-sky-300"
+            className="font-inter rounded-full border border-[var(--color-border)] bg-white/[0.02] px-3 py-1 text-[11px] font-medium text-[var(--color-body)] transition-colors hover:border-[var(--color-cta)]/40 hover:bg-[var(--color-cta)]/10 hover:text-[var(--color-cta)]"
           >
             {sample.label}
           </button>
@@ -148,10 +148,10 @@ export function UrlProductScanner({ onPlanProduct }: UrlProductScannerProps) {
 
       {/* Product Discovery Result Card */}
       {scannedProduct && (
-        <div className="mt-2 flex flex-col gap-4 rounded-xl border border-sky-500/30 bg-sky-500/[0.03] p-4">
+        <div className="mt-2 flex flex-col gap-4 rounded-xl border border-[var(--color-cta)]/30 bg-[var(--color-cta)]/[0.03] p-4">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="flex items-center gap-3">
-              <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-sky-500/15 text-sky-300">
+              <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[var(--color-cta)]/15 text-[var(--color-cta)]">
                 {scannedProduct.category === "smartphone" ? (
                   <DeviceMobile size={22} />
                 ) : scannedProduct.category === "laptop" ? (
@@ -165,26 +165,26 @@ export function UrlProductScanner({ onPlanProduct }: UrlProductScannerProps) {
 
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="rounded-full bg-sky-400/20 px-2 py-0.5 text-[10px] font-bold text-sky-300">
+                  <span className="font-inter rounded-full bg-[var(--color-cta)]/20 px-2 py-0.5 text-[10px] font-bold text-[var(--color-cta)]">
                     {scannedProduct.storeName}
                   </span>
                   {scannedProduct.badge && (
-                    <span className="rounded-full bg-amber-400/20 px-2 py-0.5 text-[10px] font-bold text-amber-300">
+                    <span className="font-inter rounded-full bg-amber-400/20 px-2 py-0.5 text-[10px] font-bold text-amber-300">
                       {scannedProduct.badge}
                     </span>
                   )}
                 </div>
-                <h4 className="mt-1 text-sm font-semibold text-[var(--color-headline)]">
+                <h4 className="font-display mt-1 text-sm font-semibold text-[var(--color-headline)]">
                   {scannedProduct.title}
                 </h4>
               </div>
             </div>
 
-            <div className="flex flex-col items-end">
-              <span className="text-xs font-mono font-bold text-emerald-400">
+            <div className="flex flex-col items-end font-mono">
+              <span className="text-xs font-bold text-emerald-400">
                 ${scannedProduct.estimatedPriceUsd} USD
               </span>
-              <span className="text-[11px] font-mono text-[var(--color-accent)]">
+              <span className="text-[11px] text-[var(--color-cta)]">
                 ≈ {scannedProduct.estimatedPriceAlgo} ALGO / {scannedProduct.estimatedPriceXlm} XLM
               </span>
             </div>
@@ -194,10 +194,10 @@ export function UrlProductScanner({ onPlanProduct }: UrlProductScannerProps) {
           <div className="grid grid-cols-2 gap-2 rounded-lg bg-black/40 p-3 text-xs">
             {Object.entries(scannedProduct.specs).map(([key, val]) => (
               <div key={key} className="flex flex-col">
-                <span className="text-[10px] font-semibold text-[var(--color-muted)] uppercase">
+                <span className="font-inter text-[10px] font-semibold text-[var(--color-muted)] uppercase">
                   {key}
                 </span>
-                <span className="text-[11px] font-medium text-[var(--color-headline)] truncate">
+                <span className="font-poppins text-[11px] font-medium text-[var(--color-headline)] truncate">
                   {val}
                 </span>
               </div>
@@ -207,7 +207,7 @@ export function UrlProductScanner({ onPlanProduct }: UrlProductScannerProps) {
           {/* Action Button */}
           <button
             onClick={handleLaunchWorkflow}
-            className="flex items-center justify-center gap-2 rounded-full bg-[var(--color-cta)] px-5 py-2.5 text-xs font-semibold text-white transition-all hover:bg-[var(--color-cta-hover)] active:scale-[0.98]"
+            className="font-poppins flex items-center justify-center gap-2 rounded-full bg-[var(--color-cta)] px-5 py-2.5 text-xs font-semibold text-white transition-all hover:bg-[var(--color-cta-hover)] active:scale-[0.98] shadow-md shadow-[var(--color-cta)]/20"
           >
             <span>Auto-Plan Procurement with Veldar</span>
             <ArrowRight size={14} />
@@ -217,3 +217,5 @@ export function UrlProductScanner({ onPlanProduct }: UrlProductScannerProps) {
     </div>
   );
 }
+
+

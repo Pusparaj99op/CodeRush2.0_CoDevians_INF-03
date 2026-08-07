@@ -1,48 +1,48 @@
-import { ArrowRight, Sparkle } from "@phosphor-icons/react/dist/ssr";
+import { ArrowRight } from "@phosphor-icons/react/dist/ssr";
 import Link from "next/link";
 import { GsapReveal } from "./gsap-reveal";
 
 export function FinalCta() {
   return (
-    <section className="relative overflow-hidden py-24 lg:py-32">
+    <section className="relative py-28 lg:py-36">
+      {/* Expansive, smooth radial glow blending seamlessly into the dark background without box clipping */}
       <div
         aria-hidden
-        className="pointer-events-none absolute left-1/2 top-1/2 h-[450px] w-[700px] -translate-x-1/2 -translate-y-1/2 rounded-full opacity-15 blur-[120px]"
-        style={{ background: "linear-gradient(135deg, var(--color-card-from), var(--color-accent))" }}
+        className="pointer-events-none absolute left-1/2 top-1/2 h-[600px] w-full max-w-6xl -translate-x-1/2 -translate-y-1/2 rounded-full opacity-40 blur-[130px]"
+        style={{
+          background:
+            "radial-gradient(circle at 50% 50%, rgba(255, 82, 40, 0.35) 0%, rgba(255, 107, 46, 0.12) 40%, rgba(10, 9, 8, 0) 75%)",
+        }}
       />
 
       <div className="relative mx-auto max-w-4xl px-6 text-center lg:px-8">
         <GsapReveal>
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-[var(--color-border)] bg-white/5 px-4 py-1.5 text-xs font-semibold text-[var(--color-headline)]">
-            <Sparkle size={14} className="text-[var(--color-cta)]" weight="fill" />
-            Ready for Agentic Micropayments
-          </span>
-
-          <h2 className="mt-6 font-[family-name:var(--font-display)] text-4xl font-medium leading-[1.1] tracking-tight text-[var(--color-headline)] md:text-5xl lg:text-6xl">
+          <h2 className="font-display text-4xl font-medium leading-[1.1] tracking-tight text-[var(--color-headline)] md:text-5xl lg:text-6xl">
             Give it a goal. Watch it pay.
           </h2>
 
-          <p className="mx-auto mt-6 max-w-[50ch] text-lg leading-relaxed text-[var(--color-body)]">
+          <p className="font-poppins mx-auto mt-6 max-w-[50ch] text-lg leading-relaxed text-[var(--color-body)]">
             Start on Algorand TestNet with zero friction. Every payment requires your explicit approval on the free tier until you choose your policy cap.
           </p>
 
-          <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
-            <Link
-              href="/signin"
-              className="inline-flex items-center gap-2 rounded-full bg-[var(--color-cta)] px-8 py-4 text-base font-semibold text-white transition-all hover:bg-[var(--color-cta-hover)] active:scale-[0.98]"
-            >
-              Get started for free
-              <ArrowRight size={18} weight="bold" />
-            </Link>
-            <Link
-              href="/docs"
-              className="inline-flex items-center gap-2 rounded-full border border-[var(--color-border)] px-8 py-4 text-base font-semibold text-[var(--color-headline)] transition-colors hover:border-[var(--color-headline)]/40"
-            >
-              Read the docs
-            </Link>
-          </div>
+            <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
+              <Link
+                href="/signin"
+                className="btn-spectacular inline-flex items-center gap-2 px-8 py-4 text-base font-semibold"
+              >
+                <span>Get started for free</span>
+                <ArrowRight size={18} weight="bold" />
+              </Link>
+              <Link
+                href="/docs"
+                className="btn-secondary inline-flex items-center gap-2 px-8 py-4 text-base font-semibold"
+              >
+                Read the docs
+              </Link>
+            </div>
         </GsapReveal>
       </div>
     </section>
   );
 }
+

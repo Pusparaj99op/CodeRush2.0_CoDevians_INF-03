@@ -7,8 +7,7 @@
 import { ArrowUpRight } from "@phosphor-icons/react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { DashboardShell } from "@/components/dashboard-shell";
-import { authedFetch } from "@/lib/api-client";
+import { authedFetch, safeJson } from "@/lib/api-client";
 import { useAuth } from "@/lib/auth-context";
 import type { Workflow, WorkflowStatus } from "@/lib/types";
 
@@ -30,13 +29,13 @@ export default function WorkflowsPage() {
     let cancelled = false;
     authedFetch("/api/workflows")
       .then(async (res) => {
-        const body = await res.json();
+        const parsed = await safeJson(res);
         if (cancelled) return;
-        if (!res.ok) {
-          setError(body.error ?? "could not load workflows");
+        if (!parsed.ok || !parsed.data?.workflows) {
+          setError(parsed.error ?? "could not load workflows");
           return;
         }
-        setWorkflows(body.workflows);
+        setWorkflows(parsed.data.workflows);
       })
       .catch((err) => !cancelled && setError((err as Error).message));
     return () => {
@@ -45,7 +44,7 @@ export default function WorkflowsPage() {
   }, [user]);
 
   return (
-    <DashboardShell>
+    <div>
       <h1 className="font-[family-name:var(--font-display)] text-3xl font-medium text-[var(--color-headline)]">
         Workflows
       </h1>
@@ -110,6 +109,6 @@ export default function WorkflowsPage() {
           ))}
         </ul>
       )}
-    </DashboardShell>
+    </div>
   );
 }

@@ -8,7 +8,6 @@
 import { SignOut } from "@phosphor-icons/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { DashboardShell } from "@/components/dashboard-shell";
 import { useAuth } from "@/lib/auth-context";
 import type { Tier } from "@/lib/types";
 
@@ -36,7 +35,7 @@ export default function SettingsPage() {
   }
 
   return (
-    <DashboardShell>
+    <div>
       <h1 className="font-[family-name:var(--font-display)] text-3xl font-medium text-[var(--color-headline)]">
         Settings
       </h1>
@@ -91,6 +90,6 @@ export default function SettingsPage() {
           </div>
         </section>
       </div>
-    </DashboardShell>
+    </div>
   );
 }
