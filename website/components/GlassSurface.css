@@ -74,6 +74,7 @@
    fill the bar edge-to-edge rather than center a fixed-padding box. */
 .glass-surface--nav .glass-surface__content {
   padding: 0;
-  align-items: stretch;
-  justify-content: stretch;
+  display: flex;
+  align-items: center;
+  width: 100%;
 }

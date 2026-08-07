@@ -35,7 +35,7 @@ export function StickyStack({ cards }: { cards: React.ReactNode[] }) {
         });
         gsap.to(card, {
           scale: 0.94,
-          opacity: 0.45,
+          opacity: 0,
           ease: "none",
           scrollTrigger: {
             trigger: cardEls[i + 1],

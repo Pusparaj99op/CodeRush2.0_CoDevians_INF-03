@@ -121,8 +121,8 @@ export function Nav() {
         distortionScale={-60}
         className="glass-surface--nav border-b border-[var(--color-border)]"
       >
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6 lg:px-8">
-        <Link href="/" className="font-[family-name:var(--font-display)] text-lg font-semibold tracking-tight text-[var(--color-headline)]">
+      <div className="w-full mx-auto flex h-16 max-w-7xl items-center justify-between px-6 lg:px-8">
+        <Link href="/" className="shrink-0 mr-6 lg:mr-10 font-[family-name:var(--font-display)] text-lg font-semibold tracking-tight text-[var(--color-headline)]">
           Veldar
         </Link>
 
