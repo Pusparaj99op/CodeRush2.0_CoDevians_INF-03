@@ -4,6 +4,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { verifyPayment, type PaymentPayload } from "@/lib/facilitator";
+import { FACILITATOR_PAYEE_ADDRESS } from "@/lib/facilitator-config";
 import { getProvider } from "@/lib/providers";
 import { store } from "@/lib/store";
 
@@ -12,11 +13,6 @@ interface VerifyBody {
   stepId: string;
   payload: PaymentPayload;
 }
-
-// Demo-only payee address for the facilitator's TestNet account. Replace
-// with the deployed facilitator/escrow contract address before real use.
-const FACILITATOR_PAYEE_ADDRESS =
-  process.env.FACILITATOR_PAYEE_ADDRESS ?? "FACILITATORPLACEHOLDERADDRESSTESTNETONLY";
 
 export async function POST(req: NextRequest) {
   let body: VerifyBody;
