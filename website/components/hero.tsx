@@ -10,11 +10,40 @@ export function Hero() {
   const router = useRouter();
 
   return (
-    <section className="relative pt-12 pb-24 lg:pt-20 lg:pb-36">
-      <div className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-14 px-6 lg:grid-cols-12 lg:gap-12 lg:px-8">
-        {/* Left Column: Top SaaS Typography & Action Bar */}
+    /*
+      `section` is `relative` so CursorGrid (absolute inset-0) fills the
+      ENTIRE hero area — both left text column and right card column.
+      All content is `relative z-10` so it sits above the grid.
+    */
+    <section className="relative pt-12 pb-24 lg:pt-20 lg:pb-36 overflow-hidden">
+
+      {/* ── Full-bleed CursorGrid — entire hero section background ── */}
+      <div className="absolute inset-0 z-0" style={{ pointerEvents: "auto" }}>
+        <CursorGrid
+          cellSize={60}
+          color="#ff5228"
+          radius={180}
+          falloff="smooth"
+          holdTime={500}
+          fadeDuration={900}
+          lineWidth={1.4}
+          maxOpacity={1}
+          fillOpacity={0.18}
+          gridOpacity={0.10}
+          cellRadius={6}
+          clickPulse
+          pulseSpeed={600}
+        />
+      </div>
+
+      {/* ── Hero content — sits above the grid ── */}
+      <div
+        className="relative z-10 mx-auto grid max-w-7xl grid-cols-1 items-center gap-14 px-6 lg:grid-cols-12 lg:gap-12 lg:px-8"
+        style={{ pointerEvents: "auto" }}
+      >
+        {/* Left Column: Typography & Action Bar */}
         <div className="lg:col-span-7">
-          {/* High-Contrast Stacked Display Serif Headline */}
+          {/* Headline */}
           <h1 className="font-display text-5xl font-normal leading-[1.04] tracking-tight text-[var(--color-headline)] sm:text-6xl md:text-7xl lg:text-[5.25rem]">
             Your Goals.<br />
             Your Payments.<br />
@@ -29,38 +58,24 @@ export function Hero() {
             x402 micropayments, and keeps budgets and approvals 100% visible before anything is final.
           </p>
 
-          {/* Checklist Grid */}
+          {/* Checklist */}
           <div className="mt-9 grid grid-cols-1 gap-4 sm:grid-cols-2 max-w-xl">
-            <div className="flex items-center gap-3">
-              <div className="grid h-6 w-6 shrink-0 place-items-center rounded-full border border-[#ff5228]/80 bg-[#ff5228]/15 text-[#ff5228] shadow-[0_0_10px_rgba(255,82,40,0.3)]">
-                <Check size={13} weight="bold" />
+            {[
+              "Earn with every purchase",
+              "Instant x402 micropayments",
+              "Strict budget enforcement",
+              "No hidden fees",
+            ].map((item) => (
+              <div key={item} className="flex items-center gap-3">
+                <div className="grid h-6 w-6 shrink-0 place-items-center rounded-full border border-[#ff5228]/80 bg-[#ff5228]/15 text-[#ff5228] shadow-[0_0_10px_rgba(255,82,40,0.3)]">
+                  <Check size={13} weight="bold" />
+                </div>
+                <span className="text-sm md:text-base font-medium text-[var(--color-headline)]">{item}</span>
               </div>
-              <span className="text-sm md:text-base font-medium text-[var(--color-headline)]">Earn with every purchase</span>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <div className="grid h-6 w-6 shrink-0 place-items-center rounded-full border border-[#ff5228]/80 bg-[#ff5228]/15 text-[#ff5228] shadow-[0_0_10px_rgba(255,82,40,0.3)]">
-                <Check size={13} weight="bold" />
-              </div>
-              <span className="text-sm md:text-base font-medium text-[var(--color-headline)]">Instant x402 micropayments</span>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <div className="grid h-6 w-6 shrink-0 place-items-center rounded-full border border-[#ff5228]/80 bg-[#ff5228]/15 text-[#ff5228] shadow-[0_0_10px_rgba(255,82,40,0.3)]">
-                <Check size={13} weight="bold" />
-              </div>
-              <span className="text-sm md:text-base font-medium text-[var(--color-headline)]">Strict budget enforcement</span>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <div className="grid h-6 w-6 shrink-0 place-items-center rounded-full border border-[#ff5228]/80 bg-[#ff5228]/15 text-[#ff5228] shadow-[0_0_10px_rgba(255,82,40,0.3)]">
-                <Check size={13} weight="bold" />
-              </div>
-              <span className="text-sm md:text-base font-medium text-[var(--color-headline)]">No hidden fees</span>
-            </div>
+            ))}
           </div>
 
-          {/* Luxury SaaS Action Bar */}
+          {/* Email / CTA bar */}
           <div className="mt-10 flex max-w-lg items-center gap-2 rounded-full border border-white/15 bg-white/[0.04] p-2 shadow-2xl backdrop-blur-2xl transition-all focus-within:border-[#ff5228]/60 focus-within:ring-2 focus-within:ring-[#ff5228]/20">
             <input
               type="email"
@@ -87,38 +102,10 @@ export function Hero() {
           </p>
         </div>
 
-        {/* Right Column: CursorGrid as full background, card floats on top */}
+        {/* Right Column: TracePreview card floats above the grid */}
         <div className="lg:col-span-5 lg:pl-2">
-          {/* Outer wrapper — relative + explicit height so absolute children have real dimensions */}
-          <div className="relative min-h-[420px] lg:min-h-[520px]">
-
-            {/* Layer 0: CursorGrid fills the ENTIRE right column area freely */}
-            <div
-              className="absolute inset-0 z-0"
-              style={{ pointerEvents: "auto" }}
-            >
-              <CursorGrid
-                cellSize={60}
-                color="#ff5228"
-                radius={180}
-                falloff="smooth"
-                holdTime={500}
-                fadeDuration={900}
-                lineWidth={1.4}
-                maxOpacity={1}
-                fillOpacity={0.18}
-                gridOpacity={0.14}
-                cellRadius={6}
-                clickPulse
-                pulseSpeed={600}
-              />
-            </div>
-
-            {/* Layer 1: TracePreview card — clean dark card, no orange glow wrapper */}
-            <div className="relative z-10 rounded-[2rem] border border-white/10 bg-[#0c0a09]/90 p-6 lg:p-8 shadow-[0_20px_60px_rgba(0,0,0,0.7)] backdrop-blur-sm">
-              <TracePreview />
-            </div>
-
+          <div className="rounded-[2rem] border border-white/10 bg-[#0c0a09]/85 p-6 lg:p-8 shadow-[0_20px_60px_rgba(0,0,0,0.7)] backdrop-blur-md">
+            <TracePreview />
           </div>
         </div>
       </div>
