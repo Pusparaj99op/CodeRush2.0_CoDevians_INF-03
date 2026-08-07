@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import SpecularButton from "./SpecularButton";
 import CursorGrid from "./CursorGrid";
-import { TracePreview } from "./trace-preview";
+import { VeldarCard3D } from "./VeldarCard3D";
 
 export function Hero() {
   const router = useRouter();
@@ -63,8 +63,6 @@ export function Hero() {
             x402 micropayments, and keeps budgets and approvals 100% visible before anything is final.
           </p>
 
-
-
           {/* Email / CTA bar */}
           <div className="mt-10 flex max-w-lg items-center gap-2 rounded-full border border-white/15 bg-white/[0.04] p-2 shadow-2xl backdrop-blur-2xl transition-all focus-within:border-[#ff5228]/60 focus-within:ring-2 focus-within:ring-[#ff5228]/20">
             <input
@@ -92,11 +90,9 @@ export function Hero() {
           </p>
         </div>
 
-        {/* Right Column: TracePreview card floats above the grid */}
-        <div className="lg:col-span-5 lg:pl-2">
-          <div className="rounded-[2rem] border border-white/10 bg-[#0c0a09]/85 p-6 lg:p-8 shadow-[0_20px_60px_rgba(0,0,0,0.7)] backdrop-blur-md">
-            <TracePreview />
-          </div>
+        {/* Right Column: 3D VELDAR Credit Card rendered in Three.js */}
+        <div className="lg:col-span-5 lg:pl-2 flex justify-center">
+          <VeldarCard3D />
         </div>
       </div>
     </section>
