@@ -60,7 +60,6 @@ interface AgentActivityLogProps {
 export function AgentActivityLog({ domain, goal, active }: AgentActivityLogProps) {
   const [steps, setSteps] = useState<AgentStep[]>([]);
   const [cursor, setCursor] = useState(0);
-  const bottomRef = useRef<HTMLDivElement>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
@@ -98,9 +97,16 @@ export function AgentActivityLog({ domain, goal, active }: AgentActivityLogProps
     };
   }, [active, steps.length]);
 
-  // Auto-scroll to bottom
+  const logListRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll to bottom inside the log container only (prevents window scrolling)
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (logListRef.current) {
+      logListRef.current.scrollTo({
+        top: logListRef.current.scrollHeight,
+        behavior: "smooth",
+      });
+    }
   }, [cursor]);
 
   if (!active && steps.length === 0) return null;
@@ -131,7 +137,7 @@ export function AgentActivityLog({ domain, goal, active }: AgentActivityLogProps
       </div>
 
       {/* Log entries */}
-      <div className="flex max-h-[280px] flex-col gap-1 overflow-y-auto pr-1 scrollbar-thin">
+      <div ref={logListRef} className="flex max-h-[280px] flex-col gap-1 overflow-y-auto pr-1 scrollbar-thin">
         {steps.map((step, i) => {
           const isVisible = step.status !== "pending" || i <= cursor + 1;
           if (!isVisible) return null;
@@ -189,7 +195,6 @@ export function AgentActivityLog({ domain, goal, active }: AgentActivityLogProps
             </div>
           );
         })}
-        <div ref={bottomRef} />
       </div>
     </div>
   );
