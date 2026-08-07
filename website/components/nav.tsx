@@ -4,6 +4,7 @@ import { List, X } from "@phosphor-icons/react";
 import Link from "next/link";
 import { useState } from "react";
 import { useAuth } from "@/lib/auth-context";
+import GlassSurface from "./GlassSurface";
 
 const LINKS = [
   { href: "#how-it-works", label: "How it works" },
@@ -16,7 +17,17 @@ export function Nav() {
   const { user, signInWithGoogle, configured } = useAuth();
 
   return (
-    <header className="sticky top-0 z-50 border-b border-[var(--color-border)] bg-[var(--color-bg)]/85 backdrop-blur-md">
+    <header className="sticky top-0 z-50">
+      <GlassSurface
+        width="100%"
+        height={64}
+        borderRadius={0}
+        backgroundOpacity={0.16}
+        saturation={1.3}
+        blur={14}
+        distortionScale={-60}
+        className="glass-surface--nav border-b border-[var(--color-border)]"
+      >
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6 lg:px-8">
         <Link href="/" className="font-[family-name:var(--font-display)] text-lg font-semibold tracking-tight text-[var(--color-headline)]">
           Veldar
@@ -61,9 +72,10 @@ export function Nav() {
           {open ? <X size={22} /> : <List size={22} />}
         </button>
       </div>
+      </GlassSurface>
 
       {open && (
-        <div className="border-t border-[var(--color-border)] px-6 py-4 lg:hidden">
+        <div className="border-b border-[var(--color-border)] bg-[var(--color-bg)] px-6 py-4 lg:hidden">
           <nav className="flex flex-col gap-4">
             {LINKS.map((link) => (
               <a
