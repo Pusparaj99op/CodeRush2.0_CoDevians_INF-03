@@ -1,16 +1,68 @@
+import Link from "next/link";
+
+const COLUMNS = [
+  {
+    heading: "Product",
+    links: [
+      { href: "/product", label: "Platform" },
+      { href: "/algorand", label: "Algorand" },
+      { href: "/pricing", label: "Pricing" },
+      { href: "/dashboard", label: "Dashboard" },
+    ],
+  },
+  {
+    heading: "Company",
+    links: [
+      { href: "/about", label: "About" },
+      { href: "/docs", label: "Docs" },
+      { href: "/contact", label: "Contact" },
+    ],
+  },
+  {
+    heading: "Legal",
+    links: [
+      { href: "/legal/privacy", label: "Privacy" },
+      { href: "/legal/terms", label: "Terms" },
+    ],
+  },
+];
+
 export function Footer() {
   return (
-    <footer className="border-t border-[var(--color-border)] py-12">
-      <div className="mx-auto flex max-w-7xl flex-col gap-6 px-6 sm:flex-row sm:items-center sm:justify-between lg:px-8">
-        <div>
-          <p className="font-[family-name:var(--font-display)] text-base font-medium text-[var(--color-headline)]">
-            Veldar
-          </p>
-          <p className="mt-1 text-sm text-[var(--color-footer-dim)]">
-            Built at YCCE Nagpur. Settlement runs on Algorand TestNet.
-          </p>
+    <footer className="border-t border-[var(--color-border)] py-16">
+      <div className="mx-auto max-w-7xl px-6 lg:px-8">
+        <div className="grid grid-cols-2 gap-10 sm:grid-cols-4">
+          <div className="col-span-2 sm:col-span-1">
+            <p className="font-[family-name:var(--font-display)] text-base font-medium text-[var(--color-headline)]">
+              Veldar
+            </p>
+            <p className="mt-2 max-w-[24ch] text-sm text-[var(--color-footer-dim)]">
+              Built at YCCE Nagpur. Settlement runs on Algorand TestNet.
+            </p>
+          </div>
+
+          {COLUMNS.map((col) => (
+            <div key={col.heading}>
+              <p className="text-xs font-medium uppercase tracking-[0.12em] text-[var(--color-muted)]">
+                {col.heading}
+              </p>
+              <ul className="mt-4 flex flex-col gap-3">
+                {col.links.map((link) => (
+                  <li key={link.href}>
+                    <Link
+                      href={link.href}
+                      className="text-sm text-[var(--color-footer-dim)] transition-colors hover:text-[var(--color-headline)]"
+                    >
+                      {link.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
         </div>
-        <p className="text-sm text-[var(--color-footer-dim)]">
+
+        <p className="mt-12 border-t border-[var(--color-border)] pt-6 text-sm text-[var(--color-footer-dim)]">
           &copy; 2026 Veldar. All payments are simulated on TestNet.
         </p>
       </div>
