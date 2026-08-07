@@ -291,18 +291,20 @@ export async function executeStep(
   workflow.updatedAt = nowIso();
   await store.saveWorkflow(workflow);
 
-  await logEvent(
-    workflow.id,
-    "payment_settled",
-    {
-      receiptId: receipt.id,
-      amountAlgo: receipt.amountAlgo,
-      txnHash: receipt.txnHash,
-      simulated: receipt.simulated,
-      scheme: provider.scheme,
-    },
-    step.id
-  );
+  if (!existing) {
+    await logEvent(
+      workflow.id,
+      "payment_settled",
+      {
+        receiptId: receipt.id,
+        amountAlgo: receipt.amountAlgo,
+        txnHash: receipt.txnHash,
+        simulated: receipt.simulated,
+        scheme: provider.scheme,
+      },
+      step.id
+    );
+  }
   await logEvent(
     workflow.id,
     "provider_result",
