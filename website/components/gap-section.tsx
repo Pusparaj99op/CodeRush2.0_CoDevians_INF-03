@@ -1,5 +1,5 @@
 import { CreditCard, GitBranch, UsersThree } from "@phosphor-icons/react/dist/ssr";
-import { Reveal } from "./reveal";
+import { GsapReveal } from "./gsap-reveal";
 
 const GAPS = [
   {
@@ -23,7 +23,7 @@ export function GapSection() {
   return (
     <section id="algorand" className="py-24 lg:py-32">
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
-        <Reveal className="flex flex-col items-start gap-6 border-b border-[var(--color-border)] pb-10 lg:flex-row lg:items-end lg:justify-between">
+        <GsapReveal className="flex flex-col items-start gap-6 border-b border-[var(--color-border)] pb-10 lg:flex-row lg:items-end lg:justify-between">
           <h2 className="max-w-xl font-[family-name:var(--font-display)] text-3xl font-medium leading-tight text-[var(--color-headline)] md:text-4xl">
             Built for what Algorand doesn&apos;t have yet.
           </h2>
@@ -32,17 +32,17 @@ export function GapSection() {
             alt="Algorand"
             className="h-8 w-auto shrink-0 opacity-90"
           />
-        </Reveal>
+        </GsapReveal>
 
         <div className="mt-10 grid grid-cols-1 gap-4 md:grid-cols-3">
           {GAPS.map(({ icon: Icon, title, body }, i) => (
-            <Reveal key={title} delay={i * 0.1}>
+            <GsapReveal key={title} delay={i * 0.1}>
               <div className="flex h-full flex-col gap-4 rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg-elevated)] p-7">
                 <Icon size={26} weight="duotone" className="text-[var(--color-cta)]" />
                 <h3 className="text-base font-semibold text-[var(--color-headline)]">{title}</h3>
                 <p className="text-sm leading-relaxed text-[var(--color-body)]">{body}</p>
               </div>
-            </Reveal>
+            </GsapReveal>
           ))}
         </div>
       </div>
