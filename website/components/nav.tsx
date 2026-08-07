@@ -2,19 +2,22 @@
 
 import { List, X } from "@phosphor-icons/react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 import GlassSurface from "./GlassSurface";
 
 const LINKS = [
-  { href: "/#how-it-works", label: "How it works" },
-  { href: "/#algorand", label: "Algorand" },
-  { href: "/#pricing", label: "Pricing" },
+  { href: "/product", label: "Product" },
+  { href: "/algorand", label: "Algorand" },
+  { href: "/pricing", label: "Pricing" },
+  { href: "/docs", label: "Docs" },
 ];
 
 export function Nav() {
   const [open, setOpen] = useState(false);
   const { user, signInWithGoogle, configured, authError } = useAuth();
+  const pathname = usePathname();
 
   return (
     <header className="sticky top-0 z-50">
@@ -35,13 +38,17 @@ export function Nav() {
 
         <nav className="hidden items-center gap-8 lg:flex">
           {LINKS.map((link) => (
-            <a
+            <Link
               key={link.href}
               href={link.href}
-              className="text-sm text-[var(--color-body)] transition-colors hover:text-[var(--color-headline)]"
+              className={
+                pathname === link.href
+                  ? "text-sm font-medium text-[var(--color-headline)]"
+                  : "text-sm text-[var(--color-body)] transition-colors hover:text-[var(--color-headline)]"
+              }
             >
               {link.label}
-            </a>
+            </Link>
           ))}
         </nav>
 
@@ -83,14 +90,14 @@ export function Nav() {
         <div className="border-b border-[var(--color-border)] bg-[var(--color-bg)] px-6 py-4 lg:hidden">
           <nav className="flex flex-col gap-4">
             {LINKS.map((link) => (
-              <a
+              <Link
                 key={link.href}
                 href={link.href}
                 onClick={() => setOpen(false)}
                 className="text-sm text-[var(--color-body)]"
               >
                 {link.label}
-              </a>
+              </Link>
             ))}
             {user ? (
               <Link href="/dashboard" className="text-sm font-semibold text-[var(--color-accent)]">
