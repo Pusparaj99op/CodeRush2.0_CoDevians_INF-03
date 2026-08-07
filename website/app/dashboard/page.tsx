@@ -5,7 +5,8 @@
 // (Doc/specs/02-website.md). Talks directly to the orchestrator API routes
 // already implemented under app/api/**.
 
-import { CheckCircle, SignIn } from "@phosphor-icons/react";
+import { ArrowUpRight, CheckCircle, SignIn } from "@phosphor-icons/react";
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Nav } from "@/components/nav";
 import { useAuth } from "@/lib/auth-context";
@@ -238,6 +239,14 @@ function WorkflowPanel() {
             {workflow.spentAlgo} / {workflow.budgetAlgo} ALGO &middot; {workflow.status}
           </p>
         </div>
+        <div className="flex items-center gap-3">
+        <Link
+          href={`/trace/${workflow.id}`}
+          className="inline-flex items-center gap-1 text-xs font-medium text-[var(--color-accent)] transition-colors hover:text-[var(--color-accent-hover)]"
+        >
+          Full trace
+          <ArrowUpRight size={14} />
+        </Link>
         {pendingApproval && (
           <div className="flex gap-2">
             <button
@@ -256,6 +265,7 @@ function WorkflowPanel() {
             </button>
           </div>
         )}
+        </div>
       </div>
 
       <ul className="mt-4 flex flex-col gap-2">
