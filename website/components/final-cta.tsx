@@ -1,8 +1,14 @@
-import { ArrowRight } from "@phosphor-icons/react/dist/ssr";
+"use client";
+
+import { ArrowRight } from "@phosphor-icons/react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { GsapReveal } from "./gsap-reveal";
+import SpecularButton from "./SpecularButton";
 
 export function FinalCta() {
+  const router = useRouter();
+
   return (
     <section className="relative py-28 lg:py-36">
       {/* Expansive, smooth radial glow blending seamlessly into the dark background without box clipping */}
@@ -26,13 +32,19 @@ export function FinalCta() {
           </p>
 
             <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
-              <Link
-                href="/signin"
-                className="btn-spectacular inline-flex items-center gap-2 px-8 py-4 text-base font-semibold"
+              <SpecularButton
+                onClick={() => router.push("/signin")}
+                size="lg"
+                radius={9999}
+                tint="#ff5228"
+                tintOpacity={0.15}
+                lineColor="#ff7a59"
+                baseColor="#ff5228"
+                autoAnimate={true}
               >
                 <span>Get started for free</span>
                 <ArrowRight size={18} weight="bold" />
-              </Link>
+              </SpecularButton>
               <Link
                 href="/docs"
                 className="btn-secondary inline-flex items-center gap-2 px-8 py-4 text-base font-semibold"

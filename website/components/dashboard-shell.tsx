@@ -12,6 +12,7 @@ import { useEffect, useState } from "react";
 import { Nav } from "@/components/nav";
 import { useAuth } from "@/lib/auth-context";
 import { X402InspectorModal } from "@/components/x402-inspector-modal";
+import SpecularButton from "@/components/SpecularButton";
 
 const TABS = [
   { href: "/dashboard", label: "Overview", icon: Gauge },
@@ -87,13 +88,19 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
           </nav>
 
           <div className="flex items-center gap-3">
-            <button
+            <SpecularButton
               onClick={() => setIsInspectorOpen(true)}
-              className="btn-spectacular flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold"
+              size="sm"
+              radius={9999}
+              tint="#ff5228"
+              tintOpacity={0.15}
+              lineColor="#ff7a59"
+              baseColor="#ff5228"
+              autoAnimate={true}
             >
               <Lightning size={14} weight="bold" />
               <span>Inspect x402 Engine (Judge Demo)</span>
-            </button>
+            </SpecularButton>
 
             <a
               href="https://dispenser.testnet.aws.algorand.network/"

@@ -41,6 +41,7 @@ import { DashboardShell } from "@/components/dashboard-shell";
 import { authedFetch, safeJson } from "@/lib/api-client";
 import { UrlProductScanner } from "@/components/url-product-scanner";
 import { X402InspectorModal } from "@/components/x402-inspector-modal";
+import SpecularButton from "@/components/SpecularButton";
 import { X402PipelineOverview } from "@/components/x402-pipeline-overview";
 import { TravelMapPlanner } from "@/components/travel-map-planner";
 import { CryptoPriceTicker } from "@/components/crypto-price-ticker";
@@ -151,13 +152,19 @@ export default function Dashboard() {
           </p>
         </div>
 
-        <button
+        <SpecularButton
           onClick={() => setShowInspector(true)}
-          className="btn-spectacular flex items-center gap-2 px-5 py-2.5 text-xs font-semibold shadow-lg"
+          size="md"
+          radius={9999}
+          tint="#ff5228"
+          tintOpacity={0.15}
+          lineColor="#ff7a59"
+          baseColor="#ff5228"
+          autoAnimate={true}
         >
           <Lightning size={16} weight="fill" />
           <span>Inspect x402 Payment Pipeline</span>
-        </button>
+        </SpecularButton>
       </div>
 
       {/* Live Agent Analytics Metrics Bar */}

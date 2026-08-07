@@ -14,6 +14,7 @@ import {
   TerminalWindow,
 } from "@phosphor-icons/react";
 import { useEffect, useState } from "react";
+import SpecularButton from "@/components/SpecularButton";
 import { executeX402PaymentPipeline, type X402AuthorizationResult } from "@/lib/x402-engine";
 
 interface X402PipelineOverviewProps {
@@ -79,10 +80,16 @@ export function X402PipelineOverview({
           </div>
         </div>
 
-        <button
+        <SpecularButton
           onClick={runPipeline}
           disabled={running}
-          className="btn-spectacular flex items-center gap-2 px-5 py-2.5 font-poppins text-xs font-semibold"
+          size="sm"
+          radius={9999}
+          tint="#ff5228"
+          tintOpacity={0.15}
+          lineColor="#ff7a59"
+          baseColor="#ff5228"
+          autoAnimate={true}
         >
           {running ? (
             <>
@@ -95,7 +102,7 @@ export function X402PipelineOverview({
               <span>Re-Simulate x402 Settlement</span>
             </>
           )}
-        </button>
+        </SpecularButton>
       </div>
 
       {/* Judge Live Metric Grid */}

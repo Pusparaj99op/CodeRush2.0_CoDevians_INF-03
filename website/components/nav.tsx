@@ -9,6 +9,7 @@ import GlassSurface from "./GlassSurface";
 
 import { LogoLink } from "./logo";
 import { WalletDropdown } from "./wallet-dropdown";
+import SpecularButton from "./SpecularButton";
 
 const LINKS = [
   { href: "/product", label: "Product" },
@@ -57,12 +58,18 @@ function AccountMenu() {
     <div ref={ref} className="relative z-[100] flex items-center gap-3">
       <WalletDropdown />
 
-      <Link
-        href="/dashboard"
-        className="btn-spectacular px-5 py-2 text-sm font-semibold"
+      <SpecularButton
+        onClick={() => router.push("/dashboard")}
+        size="sm"
+        radius={9999}
+        tint="#ff5228"
+        tintOpacity={0.15}
+        lineColor="#ff7a59"
+        baseColor="#ff5228"
+        autoAnimate={true}
       >
         Dashboard
-      </Link>
+      </SpecularButton>
 
       <button
         onClick={() => setOpen((v) => !v)}
@@ -168,12 +175,18 @@ export function Nav() {
               >
                 Sign in
               </Link>
-              <Link
-                href="/signup"
-                className="btn-spectacular px-5 py-2 text-sm font-semibold"
+              <SpecularButton
+                onClick={() => router.push("/signup")}
+                size="sm"
+                radius={9999}
+                tint="#ff5228"
+                tintOpacity={0.15}
+                lineColor="#ff7a59"
+                baseColor="#ff5228"
+                autoAnimate={true}
               >
                 Sign up
-              </Link>
+              </SpecularButton>
             </div>
           )}
           {authError && (

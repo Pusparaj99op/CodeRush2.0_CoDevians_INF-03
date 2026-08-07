@@ -1,10 +1,13 @@
 "use client";
 
 import { Check } from "@phosphor-icons/react";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
+import SpecularButton from "./SpecularButton";
 import { TracePreview } from "./trace-preview";
 
 export function Hero() {
+  const router = useRouter();
+
   return (
     <section className="relative pt-12 pb-24 lg:pt-20 lg:pb-36">
       <div className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-14 px-6 lg:grid-cols-12 lg:gap-12 lg:px-8">
@@ -63,9 +66,19 @@ export function Hero() {
               placeholder="Your email address or goal..."
               className="w-full bg-transparent px-5 py-3 text-sm text-[var(--color-headline)] placeholder:text-[var(--color-muted)] outline-none"
             />
-            <Link href="/dashboard" className="btn-spectacular shrink-0 px-7 py-3.5 text-sm font-semibold whitespace-nowrap shadow-lg">
+            <SpecularButton
+              onClick={() => router.push("/dashboard")}
+              size="lg"
+              radius={9999}
+              tint="#ff5228"
+              tintOpacity={0.15}
+              lineColor="#ff7a59"
+              baseColor="#ff5228"
+              autoAnimate={true}
+              className="shrink-0"
+            >
               Join Waitlist
-            </Link>
+            </SpecularButton>
           </div>
 
           <p className="mt-3.5 text-xs text-[var(--color-footer-dim)] pl-2">
