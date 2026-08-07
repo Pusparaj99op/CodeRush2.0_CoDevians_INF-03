@@ -5,28 +5,77 @@
 // walkthrough (Doc/specs/02-website.md). Talks directly to the
 // orchestrator API routes already implemented under app/api/**.
 
-import { ArrowUpRight, CheckCircle, Wallet } from "@phosphor-icons/react";
+import {
+  ArrowUpRight,
+  CheckCircle,
+  Clock,
+  Coins,
+  FileText,
+  Lightning,
+  PlugsConnected,
+  ShieldCheck,
+  Sparkle,
+  Spinner,
+  Wallet,
+  XCircle,
+  CaretRight,
+  Copy,
+  Check,
+} from "@phosphor-icons/react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { DashboardShell } from "@/components/dashboard-shell";
 import { authedFetch } from "@/lib/api-client";
 import { useAuth } from "@/lib/auth-context";
 import { connectLuteWallet, signPaymentWithLute } from "@/lib/lute-wallet";
-import type { LedgerEvent, Tier, Workflow } from "@/lib/types";
+import type { LedgerEvent, Tier, Workflow, WorkflowStep } from "@/lib/types";
+
+const PRESET_GOALS = [
+  {
+    title: "Document Translation & Fact-Check",
+    goal: "Translate and fact-check a document",
+    budget: 10,
+    icon: FileText,
+    badge: "Popular",
+  },
+  {
+    title: "Tokyo Trip Booking & Hotel",
+    goal: "Book a trip to Tokyo with flights and hotel under budget",
+    budget: 25,
+    icon: Sparkle,
+    badge: "Travel",
+  },
+  {
+    title: "Smart Contract Audit & Coverage",
+    goal: "Analyze smart contract vulnerability and purchase coverage",
+    budget: 15,
+    icon: ShieldCheck,
+    badge: "Security",
+  },
+  {
+    title: "Market Data & Sentiment Analysis",
+    goal: "Aggregate market data and generate sentiment report",
+    budget: 8,
+    icon: Lightning,
+    badge: "Data",
+  },
+];
 
 export default function Dashboard() {
   const { user } = useAuth();
 
   return (
     <DashboardShell>
-      <h1 className="font-[family-name:var(--font-display)] text-3xl font-medium text-[var(--color-headline)]">
-        Welcome, {user?.displayName ?? "there"}.
-      </h1>
-      <p className="mt-2 text-sm text-[var(--color-body)]">
-        Submit a goal and watch the orchestrator quote, request approval, and settle each step.
-      </p>
+      <div className="flex flex-col gap-1">
+        <h1 className="font-[family-name:var(--font-display)] text-3xl font-medium text-[var(--color-headline)]">
+          Welcome, {user?.displayName ?? "Agent Master"}.
+        </h1>
+        <p className="text-sm text-[var(--color-body)]">
+          Submit an autonomous goal. Veldar will quote providers, request approvals, and settle step payments on Algorand.
+        </p>
+      </div>
 
-      <div className="mt-10 grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,360px)_1fr]">
+      <div className="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,360px)_1fr]">
         {user && <WorkflowForm />}
         <WorkflowPanel />
       </div>
@@ -43,11 +92,10 @@ function WorkflowForm() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (!goal.trim()) return;
     setSubmitting(true);
     setError(null);
     try {
-      // The caller's identity comes from the Firebase ID token, not a
-      // client-supplied userId (see lib/api-auth.ts).
       const res = await authedFetch("/api/workflows", {
         method: "POST",
         body: JSON.stringify({ goal, budgetAlgo: budget, tier }),
@@ -62,65 +110,121 @@ function WorkflowForm() {
     }
   }
 
+  function applyPreset(presetGoal: string, presetBudget: number) {
+    setGoal(presetGoal);
+    setBudget(presetBudget);
+  }
+
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="flex h-fit flex-col gap-5 rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg-elevated)] p-6"
-    >
-      <div className="flex flex-col gap-2">
-        <label htmlFor="goal" className="text-sm font-medium text-[var(--color-headline)]">
-          Goal
-        </label>
-        <textarea
-          id="goal"
-          value={goal}
-          onChange={(e) => setGoal(e.target.value)}
-          rows={3}
-          className="rounded-lg border border-[var(--color-border)] bg-transparent px-3 py-2 text-sm text-[var(--color-headline)] placeholder:text-[var(--color-muted)] focus:border-[var(--color-accent)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]/40"
-        />
-      </div>
-
-      <div className="flex flex-col gap-2">
-        <label htmlFor="budget" className="text-sm font-medium text-[var(--color-headline)]">
-          Budget (ALGO)
-        </label>
-        <input
-          id="budget"
-          type="number"
-          min={0.1}
-          step={0.1}
-          value={budget}
-          onChange={(e) => setBudget(Number(e.target.value))}
-          className="rounded-lg border border-[var(--color-border)] bg-transparent px-3 py-2 text-sm text-[var(--color-headline)] focus:border-[var(--color-accent)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]/40"
-        />
-      </div>
-
-      <div className="flex flex-col gap-2">
-        <label htmlFor="tier" className="text-sm font-medium text-[var(--color-headline)]">
-          Subscription tier
-        </label>
-        <select
-          id="tier"
-          value={tier}
-          onChange={(e) => setTier(e.target.value as Tier)}
-          className="rounded-lg border border-[var(--color-border)] bg-[var(--color-bg)] px-3 py-2 text-sm text-[var(--color-headline)] focus:border-[var(--color-accent)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]/40"
-        >
-          <option value="free">Free</option>
-          <option value="pro">Pro</option>
-          <option value="promax">ProMax</option>
-        </select>
-      </div>
-
-      {error && <p className="text-sm text-red-400">{error}</p>}
-
-      <button
-        type="submit"
-        disabled={submitting}
-        className="mt-1 rounded-full bg-[var(--color-cta)] px-5 py-3 text-sm font-semibold text-white transition-all hover:bg-[var(--color-cta-hover)] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
+    <div className="flex h-fit flex-col gap-6">
+      <form
+        onSubmit={handleSubmit}
+        className="flex flex-col gap-5 rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg-elevated)] p-6 shadow-sm"
       >
-        {submitting ? "Starting..." : "Start workflow"}
-      </button>
-    </form>
+        <div className="flex items-center justify-between">
+          <h2 className="text-sm font-semibold text-[var(--color-headline)]">New Autonomous Goal</h2>
+          <span className="rounded-full bg-[var(--color-accent)]/10 px-2.5 py-0.5 text-[10px] font-bold tracking-wider text-[var(--color-accent)] uppercase">
+            Agentic Pipeline
+          </span>
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <label htmlFor="goal" className="text-xs font-semibold text-[var(--color-headline)]">
+            Goal Description
+          </label>
+          <textarea
+            id="goal"
+            value={goal}
+            onChange={(e) => setGoal(e.target.value)}
+            rows={3}
+            placeholder="Describe what you want Veldar to execute..."
+            className="rounded-xl border border-[var(--color-border)] bg-transparent px-3.5 py-2.5 text-sm text-[var(--color-headline)] placeholder:text-[var(--color-muted)] focus:border-[var(--color-accent)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]/40"
+          />
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <div className="flex flex-col gap-2">
+            <label htmlFor="budget" className="text-xs font-semibold text-[var(--color-headline)]">
+              Max Budget (ALGO)
+            </label>
+            <input
+              id="budget"
+              type="number"
+              min={0.1}
+              step={0.1}
+              value={budget}
+              onChange={(e) => setBudget(Number(e.target.value))}
+              className="rounded-xl border border-[var(--color-border)] bg-transparent px-3 py-2 text-sm text-[var(--color-headline)] focus:border-[var(--color-accent)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]/40"
+            />
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <label htmlFor="tier" className="text-xs font-semibold text-[var(--color-headline)]">
+              Subscription Tier
+            </label>
+            <select
+              id="tier"
+              value={tier}
+              onChange={(e) => setTier(e.target.value as Tier)}
+              className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)] px-3 py-2 text-sm text-[var(--color-headline)] focus:border-[var(--color-accent)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]/40"
+            >
+              <option value="free">Free (2.5% fee)</option>
+              <option value="pro">Pro (1% fee)</option>
+              <option value="promax">ProMax (0% fee)</option>
+            </select>
+          </div>
+        </div>
+
+        {error && <p className="text-xs text-red-400">{error}</p>}
+
+        <button
+          type="submit"
+          disabled={submitting}
+          className="mt-1 flex items-center justify-center gap-2 rounded-full bg-[var(--color-cta)] px-5 py-3 text-sm font-semibold text-white transition-all hover:bg-[var(--color-cta-hover)] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {submitting ? (
+            <>
+              <Spinner size={16} className="animate-spin" />
+              <span>Compiling Workflow...</span>
+            </>
+          ) : (
+            <>
+              <Sparkle size={16} />
+              <span>Start Autonomous Workflow</span>
+            </>
+          )}
+        </button>
+      </form>
+
+      {/* Preset Quick Launchers */}
+      <div className="flex flex-col gap-3 rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg-elevated)] p-5">
+        <p className="text-xs font-semibold text-[var(--color-headline)]">Quick Goal Templates</p>
+        <div className="flex flex-col gap-2">
+          {PRESET_GOALS.map((preset) => {
+            const Icon = preset.icon;
+            return (
+              <button
+                key={preset.title}
+                type="button"
+                onClick={() => applyPreset(preset.goal, preset.budget)}
+                className="group flex items-center justify-between gap-3 rounded-xl border border-[var(--color-border)]/60 bg-white/[0.02] p-3 text-left transition-colors hover:border-[var(--color-accent)]/40 hover:bg-white/[0.05]"
+              >
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-[var(--color-accent)]/10 text-[var(--color-accent)] group-hover:bg-[var(--color-accent)] group-hover:text-white transition-colors">
+                    <Icon size={16} />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="truncate text-xs font-medium text-[var(--color-headline)]">{preset.title}</p>
+                    <p className="text-[11px] text-[var(--color-muted)]">{preset.budget} ALGO max</p>
+                  </div>
+                </div>
+                <CaretRight size={14} className="shrink-0 text-[var(--color-muted)] group-hover:text-[var(--color-headline)] transition-colors" />
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -129,6 +233,7 @@ function WorkflowPanel() {
   const [workflow, setWorkflow] = useState<Workflow | null>(null);
   const [trace, setTrace] = useState<LedgerEvent[]>([]);
   const [approving, setApproving] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<"pipeline" | "events">("pipeline");
 
   async function refresh(id: string) {
     const [wfRes, traceRes] = await Promise.all([
@@ -214,7 +319,7 @@ function WorkflowPanel() {
       });
       await refresh(workflow.id);
     } catch (err) {
-      alert(`Lute Wallet Approval Error: ${(err as Error).message}`);
+      alert(`Approval Error: ${(err as Error).message}`);
     } finally {
       setApproving(null);
     }
@@ -222,74 +327,257 @@ function WorkflowPanel() {
 
   if (!workflow) {
     return (
-      <div className="grid min-h-[280px] place-items-center rounded-2xl border border-dashed border-[var(--color-border)] p-8 text-center">
-        <p className="text-sm text-[var(--color-muted)]">
-          Start a workflow to see its trace here: offers, quotes, approvals, and settlements as
-          they happen.
+      <div className="flex min-h-[420px] flex-col items-center justify-center rounded-2xl border border-dashed border-[var(--color-border)] p-12 text-center bg-[var(--color-bg-elevated)]/50">
+        <div className="grid h-12 w-12 place-items-center rounded-2xl bg-[var(--color-accent)]/10 text-[var(--color-accent)] mb-4">
+          <Sparkle size={24} />
+        </div>
+        <h3 className="text-base font-semibold text-[var(--color-headline)]">No Active Workflow</h3>
+        <p className="mt-1 max-w-sm text-xs text-[var(--color-muted)] leading-relaxed">
+          Select a quick template or type a goal on the left to watch Veldar assemble providers, quote pricing, request approvals, and settle payments on Algorand.
         </p>
       </div>
     );
   }
 
+  const spendPercent = Math.min(100, Math.round((workflow.spentAlgo / (workflow.budgetAlgo || 1)) * 100));
+
   return (
-    <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg-elevated)] p-6">
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--color-border)] pb-4">
-        <div>
-          <p className="text-sm font-medium text-[var(--color-headline)]">{workflow.goal}</p>
-          <p className="mt-1 text-xs text-[var(--color-muted)]">
-            {workflow.spentAlgo} / {workflow.budgetAlgo} ALGO &middot;{" "}
-            <span className="font-semibold capitalize text-[var(--color-accent)]">{workflow.status}</span>
-          </p>
+    <div className="flex flex-col gap-6 rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg-elevated)] p-6 shadow-sm">
+      {/* Header Info */}
+      <div className="flex flex-wrap items-start justify-between gap-4 border-b border-[var(--color-border)] pb-5">
+        <div className="flex flex-col gap-1 min-w-0">
+          <div className="flex items-center gap-2">
+            <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold capitalize ${
+              workflow.status === "completed"
+                ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/30"
+                : workflow.status === "running"
+                ? "bg-[var(--color-accent)]/10 text-[var(--color-accent)] border border-[var(--color-accent)]/30 animate-pulse"
+                : "bg-red-500/10 text-red-400 border border-red-500/30"
+            }`}>
+              {workflow.status === "running" && <Spinner size={12} className="animate-spin" />}
+              {workflow.status}
+            </span>
+            <span className="text-xs font-mono text-[var(--color-muted)]">ID: {workflow.id.slice(0, 8)}...</span>
+          </div>
+          <h2 className="mt-1 text-lg font-semibold text-[var(--color-headline)]">{workflow.goal}</h2>
         </div>
+
         <div className="flex items-center gap-3">
           <Link
             href={`/trace/${workflow.id}`}
-            className="inline-flex items-center gap-1 text-xs font-medium text-[var(--color-accent)] transition-colors hover:text-[var(--color-accent-hover)]"
+            className="inline-flex items-center gap-1.5 rounded-full border border-[var(--color-border)] bg-white/5 px-3.5 py-1.5 text-xs font-medium text-[var(--color-headline)] transition-colors hover:border-[var(--color-accent)] hover:text-[var(--color-accent)]"
           >
-            Full trace
+            <span>Replay Trace</span>
             <ArrowUpRight size={14} />
           </Link>
-          {pendingApproval && (
+        </div>
+      </div>
+
+      {/* Budget & Spend Gauge */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 rounded-xl border border-[var(--color-border)]/70 bg-white/[0.02] p-4">
+        <div>
+          <p className="text-[11px] font-medium text-[var(--color-muted)] uppercase tracking-wider">Spent / Budget</p>
+          <p className="mt-1 text-base font-bold font-mono text-[var(--color-headline)]">
+            {workflow.spentAlgo.toFixed(2)} / {workflow.budgetAlgo} <span className="text-xs font-sans font-normal text-[var(--color-accent)]">ALGO</span>
+          </p>
+          <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-white/10">
+            <div
+              className="h-full rounded-full bg-[var(--color-accent)] transition-all duration-500"
+              style={{ width: `${spendPercent}%` }}
+            />
+          </div>
+        </div>
+
+        <div>
+          <p className="text-[11px] font-medium text-[var(--color-muted)] uppercase tracking-wider">Pipeline Steps</p>
+          <p className="mt-1 text-base font-bold font-mono text-[var(--color-headline)]">
+            {workflow.steps?.filter((s) => s.status === "fulfilled").length || 0} / {workflow.steps?.length || 0} <span className="text-xs font-sans font-normal text-emerald-400">Completed</span>
+          </p>
+        </div>
+
+        <div>
+          <p className="text-[11px] font-medium text-[var(--color-muted)] uppercase tracking-wider">Settlement Network</p>
+          <div className="mt-1 flex items-center gap-2 text-xs font-semibold text-emerald-300">
+            <ShieldCheck size={16} className="text-emerald-400" />
+            <span>Algorand TestNet</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Pending Approval Callout Banner */}
+      {pendingApproval && (
+        <div className="flex flex-col gap-3 rounded-xl border border-amber-500/40 bg-amber-500/10 p-4 text-amber-200 animate-pulse">
+          <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2">
-              <button
-                onClick={() => approve("denied")}
-                disabled={approving !== null}
-                className="rounded-full border border-[var(--color-border)] px-3.5 py-1.5 text-xs font-semibold text-[var(--color-headline)] transition-colors hover:bg-white/10 disabled:opacity-50"
-              >
-                Deny
-              </button>
-              <button
-                onClick={() => approve("approved", true)}
-                disabled={approving !== null}
-                className="flex items-center gap-1.5 rounded-full border border-emerald-500/40 bg-emerald-500/15 px-3.5 py-1.5 text-xs font-semibold text-emerald-300 transition-colors hover:bg-emerald-500/25 disabled:opacity-50"
-              >
-                <Wallet size={13} className="text-emerald-400" />
-                <span>Approve with Lute</span>
-              </button>
-              <button
-                onClick={() => approve("approved")}
-                disabled={approving !== null}
-                className="rounded-full bg-[var(--color-cta)] px-4 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-[var(--color-cta-hover)] disabled:opacity-50"
-              >
-                Approve {(pendingApproval.detail.amountAlgo as number) ?? ""} ALGO
-              </button>
+              <Clock size={18} className="text-amber-400" />
+              <p className="text-xs font-bold uppercase tracking-wider">Action Required: Human Approval Requested</p>
             </div>
+            <span className="rounded-full bg-amber-400/20 px-2.5 py-0.5 text-xs font-bold text-amber-300">
+              {(pendingApproval.detail.amountAlgo as number) ?? 1.0} ALGO
+            </span>
+          </div>
+
+          <p className="text-xs text-amber-200/90 leading-relaxed">
+            Provider <code className="rounded bg-black/40 px-1.5 py-0.5 font-mono text-amber-300">{String(pendingApproval.detail.providerId ?? "Provider")}</code> requested approval for: &ldquo;{String(pendingApproval.detail.reason ?? "Execute next workflow step")}&rdquo;.
+          </p>
+
+          <div className="mt-1 flex flex-wrap items-center gap-2">
+            <button
+              onClick={() => approve("approved", true)}
+              disabled={approving !== null}
+              className="flex items-center gap-2 rounded-full border border-emerald-500/50 bg-emerald-500/20 px-4 py-2 text-xs font-semibold text-emerald-300 transition-colors hover:bg-emerald-500/30 disabled:opacity-50"
+            >
+              <Wallet size={14} className="text-emerald-400" />
+              <span>Approve with Lute Wallet</span>
+            </button>
+
+            <button
+              onClick={() => approve("approved")}
+              disabled={approving !== null}
+              className="rounded-full bg-[var(--color-cta)] px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-[var(--color-cta-hover)] disabled:opacity-50"
+            >
+              Approve {(pendingApproval.detail.amountAlgo as number) ?? ""} ALGO
+            </button>
+
+            <button
+              onClick={() => approve("denied")}
+              disabled={approving !== null}
+              className="rounded-full border border-[var(--color-border)] bg-black/30 px-4 py-2 text-xs font-semibold text-[var(--color-headline)] transition-colors hover:bg-white/10 disabled:opacity-50"
+            >
+              Deny
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Tabs */}
+      <div className="flex border-b border-[var(--color-border)]">
+        <button
+          onClick={() => setActiveTab("pipeline")}
+          className={`border-b-2 px-4 py-2.5 text-xs font-semibold transition-colors ${
+            activeTab === "pipeline"
+              ? "border-[var(--color-accent)] text-[var(--color-headline)]"
+              : "border-transparent text-[var(--color-muted)] hover:text-[var(--color-headline)]"
+          }`}
+        >
+          Pipeline Steps ({workflow.steps?.length || 0})
+        </button>
+        <button
+          onClick={() => setActiveTab("events")}
+          className={`border-b-2 px-4 py-2.5 text-xs font-semibold transition-colors ${
+            activeTab === "events"
+              ? "border-[var(--color-accent)] text-[var(--color-headline)]"
+              : "border-transparent text-[var(--color-muted)] hover:text-[var(--color-headline)]"
+          }`}
+        >
+          Ledger Event Stream ({trace.length})
+        </button>
+      </div>
+
+      {/* Tab 1: Pipeline Steps Cards */}
+      {activeTab === "pipeline" && (
+        <div className="flex flex-col gap-3">
+          {(!workflow.steps || workflow.steps.length === 0) && (
+            <p className="py-6 text-center text-xs text-[var(--color-muted)]">Compiling workflow steps...</p>
+          )}
+
+          {workflow.steps?.map((step, idx) => (
+            <StepCard key={step.id || idx} step={step} index={idx} />
+          ))}
+        </div>
+      )}
+
+      {/* Tab 2: Ledger Events Audit Stream */}
+      {activeTab === "events" && (
+        <ul className="flex flex-col gap-2.5 max-h-[460px] overflow-y-auto pr-1">
+          {trace.map((event) => (
+            <li key={event.id} className="flex items-start gap-3 rounded-xl border border-[var(--color-border)]/50 bg-white/[0.01] p-3 text-xs">
+              <CheckCircle
+                size={16}
+                weight="fill"
+                className={`mt-0.5 shrink-0 ${
+                  event.type === "step_failed"
+                    ? "text-red-400"
+                    : event.type === "payment_settled"
+                    ? "text-emerald-400"
+                    : "text-[var(--color-cta)]"
+                }`}
+              />
+              <div className="flex flex-col min-w-0 flex-1">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="font-semibold text-[var(--color-headline)] capitalize">{event.type.replace(/_/g, " ")}</span>
+                  <span className="text-[10px] font-mono text-[var(--color-muted)]">
+                    {new Date(event.at).toLocaleTimeString()}
+                  </span>
+                </div>
+                {Object.keys(event.detail || {}).length > 0 && (
+                  <pre className="mt-1.5 overflow-x-auto rounded-lg bg-black/40 p-2 font-mono text-[11px] text-[var(--color-body)] leading-relaxed">
+                    {JSON.stringify(event.detail, null, 2)}
+                  </pre>
+                )}
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+function StepCard({ step, index }: { step: WorkflowStep; index: number }) {
+  const isFulfilled = step.status === "fulfilled";
+  const isAwaiting = step.status === "awaiting_approval";
+  const isFailed = step.status === "failed";
+
+  return (
+    <div className={`flex flex-col gap-3 rounded-xl border p-4 transition-all ${
+      isFulfilled
+        ? "border-emerald-500/30 bg-emerald-500/[0.02]"
+        : isAwaiting
+        ? "border-amber-500/40 bg-amber-500/[0.03]"
+        : isFailed
+        ? "border-red-500/30 bg-red-500/[0.02]"
+        : "border-[var(--color-border)] bg-white/[0.01]"
+    }`}>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex items-center gap-3">
+          <span className="grid h-6 w-6 place-items-center rounded-full bg-white/10 text-xs font-bold text-[var(--color-headline)]">
+            {index + 1}
+          </span>
+          <div>
+            <h4 className="text-xs font-semibold text-[var(--color-headline)]">{step.description}</h4>
+            <p className="text-[11px] font-mono text-[var(--color-muted)]">Provider: {step.providerId}</p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-semibold capitalize ${
+            isFulfilled
+              ? "bg-emerald-500/15 text-emerald-300"
+              : isAwaiting
+              ? "bg-amber-500/15 text-amber-300"
+              : isFailed
+              ? "bg-red-500/15 text-red-300"
+              : "bg-white/10 text-[var(--color-muted)]"
+          }`}>
+            {step.status.replace(/_/g, " ")}
+          </span>
+
+          {step.quotedPriceAlgo !== null && (
+            <span className="font-mono text-xs font-semibold text-[var(--color-accent)]">
+              {step.settledPriceAlgo ?? step.quotedPriceAlgo} ALGO
+            </span>
           )}
         </div>
       </div>
 
-      <ul className="mt-4 flex flex-col gap-2">
-        {trace.map((event) => (
-          <li key={event.id} className="flex items-center gap-3 text-sm">
-            <CheckCircle
-              size={14}
-              weight="fill"
-              className={event.type === "step_failed" ? "text-red-400" : "text-[var(--color-cta)]"}
-            />
-            <span className="text-[var(--color-body)]">{event.type.replace(/_/g, " ")}</span>
-          </li>
-        ))}
-      </ul>
+      {/* Deliverable Output Box */}
+      {step.output && (
+        <div className="mt-1 rounded-lg border border-[var(--color-border)]/60 bg-black/40 p-3">
+          <p className="text-[10px] font-semibold text-[var(--color-muted)] uppercase tracking-wider mb-1">Step Deliverable Output</p>
+          <p className="text-xs text-[var(--color-headline)] font-sans leading-relaxed whitespace-pre-wrap">{step.output}</p>
+        </div>
+      )}
     </div>
   );
 }
