@@ -7,19 +7,20 @@
 // dependency-failure scenario.
 
 import { NextRequest, NextResponse } from "next/server";
+import { requireOwnedWorkflow } from "@/lib/api-auth";
 import { executeStep, quoteStep } from "@/lib/orchestrator";
 import { store } from "@/lib/store";
 
 export async function POST(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: Promise<{ id: string; stepId: string }> }
 ) {
   const { id, stepId } = await params;
 
-  const workflow = await store.getWorkflow(id);
-  if (!workflow) {
-    return NextResponse.json({ error: "workflow not found" }, { status: 404 });
-  }
+  const auth = await requireOwnedWorkflow(req, id);
+  if (!auth.ok) return auth.response;
+  const { workflow } = auth;
+
   const step = workflow.steps.find((s) => s.id === stepId);
   if (!step) {
     return NextResponse.json({ error: "step not found in this workflow" }, { status: 404 });

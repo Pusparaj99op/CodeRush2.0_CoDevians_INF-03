@@ -13,6 +13,7 @@
 // See Doc/specs/03-laptop-server.md for the provider half of this contract.
 
 import { payProvider, PaymentError } from "./payer";
+import { mockFulfillment } from "./travel/mock-fulfillment";
 import { SIMULATED_TXN_PREFIX } from "./settlement-mode";
 import type { PaymentPayload, PaymentTerms } from "./facilitator";
 import type { Provider, ProviderStatus } from "./types";
@@ -37,6 +38,12 @@ export interface ProviderCallRequest {
   stepId: string;
   task: string;
   input: string;
+  /**
+   * Budget still unspent. A search provider uses it to report that nothing was
+   * found in range, which is what makes the plan's conditional edges fire
+   * instead of every step always running. Not sent to real providers.
+   */
+  remainingBudgetAlgo?: number;
 }
 
 export interface ProviderCallResult {
@@ -97,8 +104,15 @@ function mockResult(provider: Provider, req: ProviderCallRequest): ProviderCallR
     payeeAddress: "MOCK",
     network: "testnet",
   };
+  // Travel providers serve deterministic fixtures with a machine-readable
+  // header the orchestrator's condition evaluator reads; anything else keeps
+  // the original echo, which is all the two legacy demo providers ever needed.
+  const output =
+    mockFulfillment(provider, req, req.remainingBudgetAlgo) ??
+    `[mock ${provider.capability}] ${req.task}: ${req.input.slice(0, 240)}`;
+
   return {
-    output: `[mock ${provider.capability}] ${req.task}: ${req.input.slice(0, 240)}`,
+    output,
     payment: {
       // Prefixed so the receipt and the trace both record this as a
       // non-settlement. A mock provider's "payment" must never render as a
@@ -124,7 +138,15 @@ async function postTask(
     res = await fetch(provider.endpoint, {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ ...req, payment }),
+      // remainingBudgetAlgo is an internal hint for the mock fixtures; a real
+      // provider has no business knowing how much the buyer has left.
+      body: JSON.stringify({
+        workflowId: req.workflowId,
+        stepId: req.stepId,
+        task: req.task,
+        input: req.input,
+        payment,
+      }),
       signal: AbortSignal.timeout(CALL_TIMEOUT_MS),
       cache: "no-store",
     });

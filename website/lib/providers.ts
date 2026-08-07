@@ -19,7 +19,100 @@ const LAPTOP_BASE_URL = (process.env.LAPTOP_SERVER_URL ?? "http://localhost:8787
   ""
 );
 
+// Travel marketplace. Prices are chosen against TIER_CAPS (free 0.5, pro 5,
+// promax unlimited) so each tier produces a visibly different approval
+// pattern rather than all three behaving the same:
+//
+//   - searching is cheap enough to never prompt on any tier
+//   - hotel booking at 4.0 prompts on free but not on pro  -> the tier lever
+//   - flight booking at 6.0 prompts on free and pro        -> the headline moment
+//   - travel insurance is under every cap but `verified: false`, so it prompts
+//     on every tier -> exercises the unverified-provider branch independently
+//     of price
+//
+// All of these are `mock: true` placeholder domains, so `probeProvider`
+// short-circuits and `callProvider` serves deterministic fixtures from
+// lib/travel/mock-fulfillment.ts. Swapping any one for a real supplier is a
+// matter of changing `endpoint` and clearing `mock`.
+const TRAVEL_PROVIDERS: Provider[] = [
+  {
+    id: "flight-search",
+    name: "skyline-search.example",
+    endpoint: "https://skyline-search.example/v1/flights/search",
+    capability: "flight-search",
+    scheme: "exact",
+    priceAlgo: 0.25,
+    verified: true,
+    mock: true,
+  },
+  {
+    id: "hotel-search",
+    name: "roomfinder.example",
+    endpoint: "https://roomfinder.example/v1/hotels/search",
+    capability: "hotel-search",
+    scheme: "exact",
+    priceAlgo: 0.25,
+    verified: true,
+    mock: true,
+  },
+  {
+    id: "flight-booking",
+    name: "skyline-booking.example",
+    endpoint: "https://skyline-booking.example/v1/flights/book",
+    capability: "flight-booking",
+    // "upto": the advertised 6.0 is a ceiling and the settled fare comes in
+    // at or below it, which is how airfare actually behaves.
+    scheme: "upto",
+    priceAlgo: 6.0,
+    verified: true,
+    mock: true,
+  },
+  {
+    id: "hotel-booking",
+    name: "roomfinder-booking.example",
+    endpoint: "https://roomfinder-booking.example/v1/hotels/book",
+    capability: "hotel-booking",
+    scheme: "upto",
+    priceAlgo: 4.0,
+    verified: true,
+    mock: true,
+  },
+  {
+    id: "activity-booking",
+    name: "localguide.example",
+    endpoint: "https://localguide.example/v1/activities/book",
+    capability: "activity-booking",
+    scheme: "exact",
+    priceAlgo: 1.5,
+    verified: true,
+    mock: true,
+  },
+  {
+    id: "ground-transfer",
+    name: "citytransfer.example",
+    endpoint: "https://citytransfer.example/v1/transfers/book",
+    capability: "ground-transfer",
+    scheme: "exact",
+    priceAlgo: 0.75,
+    verified: true,
+    mock: true,
+  },
+  {
+    id: "travel-insurance",
+    name: "coverwise.example",
+    endpoint: "https://coverwise.example/v1/policies",
+    capability: "insurance",
+    scheme: "exact",
+    priceAlgo: 0.4,
+    // Unverified on purpose: cheap enough to clear every tier cap, so the only
+    // thing that can stop it is the human-approval gate for new providers.
+    verified: false,
+    mock: true,
+  },
+];
+
 export const PROVIDERS: Provider[] = [
+  ...TRAVEL_PROVIDERS,
   {
     id: "translate-api",
     name: "translate-api.example",

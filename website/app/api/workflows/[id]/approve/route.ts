@@ -2,6 +2,7 @@
 // Body: { approvalId: string, decision: "approved" | "denied" }
 
 import { NextRequest, NextResponse } from "next/server";
+import { requireOwnedWorkflow } from "@/lib/api-auth";
 import { advanceWorkflow, decideApproval } from "@/lib/orchestrator";
 import { store } from "@/lib/store";
 
@@ -13,10 +14,11 @@ interface ApproveBody {
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
 
-  const workflow = await store.getWorkflow(id);
-  if (!workflow) {
-    return NextResponse.json({ error: "workflow not found" }, { status: 404 });
-  }
+  // Before req.json(), so an unauthenticated caller gets 401 rather than a
+  // 400 that would tell them the body shape was the only thing wrong.
+  const auth = await requireOwnedWorkflow(req, id);
+  if (!auth.ok) return auth.response;
+  const { workflow } = auth;
 
   let body: ApproveBody;
   try {
@@ -41,11 +43,11 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   // Re-read: decideApproval writes the step transition through the store.
   const updated = (await store.getWorkflow(id)) ?? workflow;
 
-  // An approval unblocks payment, so carry on — buy the approved step's
-  // work and continue until the next approval, failure, or completion.
-  if (body.decision === "approved") {
-    await advanceWorkflow(updated);
-  }
+  // Carry on after *either* decision. Denying an optional step now marks it
+  // skipped and leaves the workflow running, so the rest of the trip still
+  // needs driving forward; only a denied core step cancels the workflow, and
+  // advanceWorkflow stops immediately on that.
+  await advanceWorkflow(updated);
 
   return NextResponse.json({ approval, workflow: updated });
 }

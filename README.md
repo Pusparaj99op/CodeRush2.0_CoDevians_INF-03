@@ -2,22 +2,22 @@
 
 ## Project Information
 
-- Team Name: CoDevians
-- Project Title: INF-03: Composite Agentic Commerce Orchestrator (Logistics & Supply Chain Edition)
-- Track/Theme: INF-03
+* Team Name: CoDevians
+* Project Title: INF-03: Composite Agentic Travel & E-Commerce Orchestrator
+* Track/Theme: INF-03
 
 ## Project Description
 
-INF-03 is an AI-powered multi-agent commerce orchestrator that automates logistics, procurement, inventory, transportation, payments, and delivery using Algorand smart contracts. Modern logistics commerce is fragmented across multiple systems. INF-03 coordinates specialized AI agents to automate procurement, transportation, inventory, payments, and delivery while Algorand provides secure, transparent, and trustless execution through smart contract escrow, proof of delivery, and instant settlement.
+INF-03 is an AI-powered multi-agent travel and e-commerce orchestrator that automates trip planning, bookings, shopping, payments, and order management using Algorand smart contracts. Instead of switching between multiple platforms, users interact with a unified AI system that coordinates specialized agents for travel planning, product discovery, secure payments, booking confirmation, and delivery tracking. Algorand ensures transparent, secure, and trustless transactions through smart contract escrow, instant settlement, and verifiable confirmations.
 
 ## Technical Stack
 
 List the technologies used in this project:
 
-- Frontend: Next.js, React, Tailwind CSS, Motion, Phosphor Icons
-- Backend: Node.js, Express, TypeScript, Firebase Admin
-- Database: Firebase / Firestore
-- Tools/APIs: Algorand SDK (`algosdk`), Gemini API, Android SDK (Veldar Mobile App)
+* Frontend: Next.js, React, Tailwind CSS, Motion, Phosphor Icons
+* Backend: Node.js, Express, TypeScript, Firebase Admin
+* Database: Firebase / Firestore
+* Tools/APIs: Algorand SDK (`algosdk`), Gemini API, Android SDK (Travel & Shopping Mobile App)
 
 ## Setup and Installation
 
