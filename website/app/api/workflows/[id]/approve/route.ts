@@ -2,7 +2,7 @@
 // Body: { approvalId: string, decision: "approved" | "denied" }
 
 import { NextRequest, NextResponse } from "next/server";
-import { decideApproval, quoteStep } from "@/lib/orchestrator";
+import { advanceWorkflow, decideApproval } from "@/lib/orchestrator";
 import { store } from "@/lib/store";
 
 interface ApproveBody {
@@ -10,8 +10,10 @@ interface ApproveBody {
   decision: "approved" | "denied";
 }
 
-export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
-  const workflow = store.workflows.get(params.id);
+export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+
+  const workflow = await store.getWorkflow(id);
   if (!workflow) {
     return NextResponse.json({ error: "workflow not found" }, { status: 404 });
   }
@@ -23,8 +25,8 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     return NextResponse.json({ error: "invalid JSON body" }, { status: 400 });
   }
 
-  const approval = store.approvals.get(body.approvalId);
-  if (!approval || approval.workflowId !== params.id) {
+  const approval = await store.getApproval(body.approvalId);
+  if (!approval || approval.workflowId !== id) {
     return NextResponse.json({ error: "approval not found for this workflow" }, { status: 404 });
   }
   if (approval.status !== "pending") {
@@ -34,13 +36,16 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     return NextResponse.json({ error: "decision must be 'approved' or 'denied'" }, { status: 400 });
   }
 
-  decideApproval(approval, body.decision);
+  await decideApproval(approval, body.decision);
 
-  // If this unblocked a step, the caller (App/Website client) is expected
-  // to proceed to the facilitator verify/settle endpoints next; we don't
-  // auto-pay here since payment requires a client-signed Algorand txn.
-  const nextStep = workflow.steps.find((s) => s.status === "pending");
-  if (nextStep) quoteStep(workflow, nextStep);
+  // Re-read: decideApproval writes the step transition through the store.
+  const updated = (await store.getWorkflow(id)) ?? workflow;
 
-  return NextResponse.json({ approval, workflow });
+  // An approval unblocks payment, so carry on — buy the approved step's
+  // work and continue until the next approval, failure, or completion.
+  if (body.decision === "approved") {
+    await advanceWorkflow(updated);
+  }
+
+  return NextResponse.json({ approval, workflow: updated });
 }
