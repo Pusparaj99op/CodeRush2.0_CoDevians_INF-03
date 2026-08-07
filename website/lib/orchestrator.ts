@@ -1,13 +1,19 @@
-// Orchestrator: workflow compiler, budget manager, approval gate, and
-// fulfillment verifier described in Doc/specs/02-website.md.
+// Orchestrator: workflow compiler, budget manager, approval gate, provider
+// executor, and fulfillment verifier described in Doc/specs/02-website.md.
 //
 // Deliberately simple for the hackathon build: goals compile into a fixed
-// two-step pipeline (translate -> fact-check) plus the laptop's local
-// verification step, since the demo's job is to show the payment/approval/
-// trace mechanics working end-to-end, not a general-purpose planner.
+// pipeline (translate -> fact-check -> local verification on the laptop),
+// since the demo's job is to show the payment/approval/trace mechanics
+// working end-to-end, not a general-purpose planner.
+//
+// Every function here is async because the store is (lib/store) — Firestore
+// on the live deploy, in-memory locally.
 
+import { settlePayment } from "./facilitator";
 import { newId, nowIso } from "./id";
 import { getProvider, PROVIDERS } from "./providers";
+import { callProvider, ProviderError } from "./provider-client";
+import { settlementMode } from "./settlement-mode";
 import { store } from "./store";
 import { TIER_CAPS } from "./types";
 import type {
@@ -19,12 +25,12 @@ import type {
   WorkflowStep,
 } from "./types";
 
-export function logEvent(
+export async function logEvent(
   workflowId: string,
   type: LedgerEventType,
   detail: Record<string, unknown>,
   stepId?: string
-): void {
+): Promise<void> {
   const event: LedgerEvent = {
     id: newId("evt"),
     workflowId,
@@ -33,31 +39,32 @@ export function logEvent(
     detail,
     at: nowIso(),
   };
-  store.appendLedgerEvent(event);
+  await store.appendLedgerEvent(event);
 }
 
 /** Compiles a goal into a step graph. Every provider offer seen is logged. */
-export function compileWorkflow(
+export async function compileWorkflow(
   userId: string,
   tier: Tier,
   goal: string,
   budgetAlgo: number
-): Workflow {
+): Promise<Workflow> {
   const workflowId = newId("wf");
 
-  const steps: WorkflowStep[] = PROVIDERS.filter((p) => p.capability !== "local-inference").map(
-    (provider, i) => ({
-      id: newId("step"),
-      providerId: provider.id,
-      description: `${provider.capability} via ${provider.name}`,
-      condition: i === 0 ? undefined : "runs only if the prior step's output needs verification",
-      dependsOn: i === 0 ? [] : [],
-      status: "pending",
-      quotedPriceAlgo: null,
-      settledPriceAlgo: null,
-      receiptId: null,
-    })
-  );
+  // All providers participate, including the laptop's local-inference step.
+  // It used to be filtered out here, which meant the one real paid provider
+  // in the marketplace was never actually part of any workflow.
+  const steps: WorkflowStep[] = PROVIDERS.map((provider, i) => ({
+    id: newId("step"),
+    providerId: provider.id,
+    description: `${provider.capability} via ${provider.name}`,
+    condition: i === 0 ? undefined : "runs only if the prior step's output needs verification",
+    dependsOn: [],
+    status: "pending",
+    quotedPriceAlgo: null,
+    settledPriceAlgo: null,
+    receiptId: null,
+  }));
   // wire dependsOn now that ids exist
   for (let i = 1; i < steps.length; i++) {
     const prev = steps[i - 1];
@@ -72,26 +79,36 @@ export function compileWorkflow(
     goal,
     budgetAlgo,
     spentAlgo: 0,
-    status: "planning",
+    status: "running",
     steps,
     createdAt: nowIso(),
     updatedAt: nowIso(),
   };
 
-  store.workflows.set(workflowId, workflow);
-  logEvent(workflowId, "workflow_created", { goal, budgetAlgo, tier, stepCount: steps.length });
+  await store.saveWorkflow(workflow);
+  await logEvent(workflowId, "workflow_created", {
+    goal,
+    budgetAlgo,
+    tier,
+    stepCount: steps.length,
+    settlementMode: settlementMode(),
+  });
 
   for (const step of steps) {
     const provider = getProvider(step.providerId);
-    logEvent(
+    await logEvent(
       workflowId,
       "offer_seen",
-      { providerId: step.providerId, scheme: provider?.scheme, priceAlgo: provider?.priceAlgo },
+      {
+        providerId: step.providerId,
+        scheme: provider?.scheme,
+        priceAlgo: provider?.priceAlgo,
+        mock: provider?.mock ?? false,
+      },
       step.id
     );
   }
 
-  workflow.status = "running";
   return workflow;
 }
 
@@ -108,7 +125,7 @@ export interface QuoteResult {
  * This is the budget/policy enforcement point — it runs server-side
  * regardless of what any client displayed, per the App/Website specs.
  */
-export function quoteStep(workflow: Workflow, step: WorkflowStep): QuoteResult {
+export async function quoteStep(workflow: Workflow, step: WorkflowStep): Promise<QuoteResult> {
   const provider = getProvider(step.providerId);
   if (!provider) {
     return { ok: false, reason: "unknown provider", requiresApproval: false };
@@ -123,7 +140,7 @@ export function quoteStep(workflow: Workflow, step: WorkflowStep): QuoteResult {
 
   step.quotedPriceAlgo = provider.priceAlgo;
   step.status = "quoted";
-  logEvent(
+  await logEvent(
     workflow.id,
     "quote_received",
     { providerId: provider.id, priceAlgo: provider.priceAlgo, scheme: provider.scheme },
@@ -131,6 +148,7 @@ export function quoteStep(workflow: Workflow, step: WorkflowStep): QuoteResult {
   );
 
   if (workflow.spentAlgo + provider.priceAlgo > workflow.budgetAlgo) {
+    await store.saveWorkflow(workflow);
     return {
       ok: false,
       reason: "step would exceed workflow budget",
@@ -144,6 +162,7 @@ export function quoteStep(workflow: Workflow, step: WorkflowStep): QuoteResult {
 
   if (!needsApproval) {
     step.status = "paying";
+    await store.saveWorkflow(workflow);
     return { ok: true, requiresApproval: false };
   }
 
@@ -160,9 +179,10 @@ export function quoteStep(workflow: Workflow, step: WorkflowStep): QuoteResult {
     createdAt: nowIso(),
     decidedAt: null,
   };
-  store.approvals.set(approval.id, approval);
+  await store.saveApproval(approval);
   step.status = "awaiting_approval";
-  logEvent(
+  await store.saveWorkflow(workflow);
+  await logEvent(
     workflow.id,
     "approval_requested",
     { approvalId: approval.id, reason: approval.reason, amountAlgo: approval.amountAlgo },
@@ -172,24 +192,129 @@ export function quoteStep(workflow: Workflow, step: WorkflowStep): QuoteResult {
   return { ok: true, requiresApproval: true, approval };
 }
 
-export function decideApproval(
+export async function decideApproval(
   approval: Approval,
   decision: "approved" | "denied"
-): void {
+): Promise<void> {
   approval.status = decision;
   approval.decidedAt = nowIso();
+  await store.saveApproval(approval);
 
-  const workflow = store.workflows.get(approval.workflowId);
+  const workflow = await store.getWorkflow(approval.workflowId);
   const step = workflow?.steps.find((s) => s.id === approval.stepId);
   if (workflow && step) {
     step.status = decision === "approved" ? "paying" : "cancelled";
-    logEvent(
+    if (decision === "denied") workflow.status = "cancelled";
+    workflow.updatedAt = nowIso();
+    await store.saveWorkflow(workflow);
+    await logEvent(workflow.id, "approval_decided", { approvalId: approval.id, decision }, step.id);
+  }
+}
+
+/**
+ * Buys the step's work from its provider and records the settlement.
+ *
+ * This is the call that was missing entirely: `Provider.endpoint` was never
+ * read, so no work was ever purchased. The step must already be in `paying`
+ * (i.e. it cleared the budget cap, or a human approved it) — this function
+ * does not bypass the approval gate.
+ */
+export async function executeStep(
+  workflow: Workflow,
+  step: WorkflowStep
+): Promise<{ ok: boolean; reason?: string; retryable?: boolean; output?: string }> {
+  const provider = getProvider(step.providerId);
+  if (!provider) {
+    return { ok: false, reason: "unknown provider" };
+  }
+  if (step.status !== "paying") {
+    return { ok: false, reason: `step is '${step.status}', expected 'paying'` };
+  }
+
+  // Feed the previous step's output forward so the pipeline is a real
+  // chain rather than three unrelated calls.
+  const priorStep = step.dependsOn
+    .map((id) => workflow.steps.find((s) => s.id === id))
+    .find((s) => s?.output);
+  const input = priorStep?.output ?? workflow.goal;
+
+  await logEvent(
+    workflow.id,
+    "provider_called",
+    { providerId: provider.id, endpoint: provider.endpoint, mock: provider.mock ?? false },
+    step.id
+  );
+
+  let result: Awaited<ReturnType<typeof callProvider>>;
+  try {
+    result = await callProvider(provider, {
+      workflowId: workflow.id,
+      stepId: step.id,
+      task: provider.capability,
+      input,
+    });
+  } catch (err) {
+    const retryable = err instanceof ProviderError ? err.retryable : false;
+    step.status = "failed";
+    workflow.status = "failed";
+    workflow.updatedAt = nowIso();
+    await store.saveWorkflow(workflow);
+    await logEvent(
       workflow.id,
-      "approval_decided",
-      { approvalId: approval.id, decision },
+      "step_failed",
+      { reason: (err as Error).message, retryable, providerId: provider.id },
       step.id
     );
+    return { ok: false, reason: (err as Error).message, retryable };
   }
+
+  // Record settlement. The provider already had our facilitator verify the
+  // payment before doing the work; this writes our side of the receipt.
+  const existing = await store.findReceiptByStepAndTxn(step.id, result.payment.txnHash);
+  const receipt = settlePayment(
+    workflow.id,
+    step.id,
+    provider.id,
+    result.payment,
+    provider.scheme,
+    existing ?? undefined
+  );
+  await store.saveReceipt(receipt);
+
+  step.status = "paid";
+  step.settledPriceAlgo = receipt.amountAlgo;
+  step.receiptId = receipt.id;
+  step.output = result.output;
+  workflow.spentAlgo += existing ? 0 : receipt.amountAlgo;
+  workflow.updatedAt = nowIso();
+  await store.saveWorkflow(workflow);
+
+  await logEvent(
+    workflow.id,
+    "payment_settled",
+    {
+      receiptId: receipt.id,
+      amountAlgo: receipt.amountAlgo,
+      txnHash: receipt.txnHash,
+      simulated: receipt.simulated,
+      scheme: provider.scheme,
+    },
+    step.id
+  );
+  await logEvent(
+    workflow.id,
+    "provider_result",
+    {
+      providerId: provider.id,
+      usage: result.usage,
+      settlement: result.settlement,
+      preview: result.output.slice(0, 200),
+    },
+    step.id
+  );
+
+  await verifyFulfillment(workflow, step, result.output);
+  return { ok: true, output: result.output };
 }
 
 /**
@@ -198,29 +323,60 @@ export function decideApproval(
  * check for the demo — Doc/specs/02-website.md's production version adds
  * schema, provenance, and quality-metadata checks.
  */
-export function verifyFulfillment(workflow: Workflow, step: WorkflowStep, result: unknown): boolean {
-  const passed = result !== null && result !== undefined;
-  logEvent(
-    workflow.id,
-    "fulfillment_verified",
-    { passed, result },
-    step.id
-  );
+export async function verifyFulfillment(
+  workflow: Workflow,
+  step: WorkflowStep,
+  result: unknown
+): Promise<boolean> {
+  const passed = typeof result === "string" ? result.trim().length > 0 : result != null;
+  await logEvent(workflow.id, "fulfillment_verified", { passed }, step.id);
+
   step.status = passed ? "fulfilled" : "failed";
   if (!passed) {
-    logEvent(workflow.id, "step_failed", { reason: "fulfillment verification failed" }, step.id);
+    await logEvent(workflow.id, "step_failed", { reason: "fulfillment verification failed" }, step.id);
+    workflow.status = "failed";
   }
   workflow.updatedAt = nowIso();
 
   if (workflow.steps.every((s) => s.status === "fulfilled" || s.status === "skipped")) {
     workflow.status = "completed";
-    logEvent(workflow.id, "workflow_completed", { spentAlgo: workflow.spentAlgo });
+    await store.saveWorkflow(workflow);
+    await logEvent(workflow.id, "workflow_completed", { spentAlgo: workflow.spentAlgo });
+  } else {
+    await store.saveWorkflow(workflow);
   }
 
   return passed;
 }
 
-export function cancelWorkflow(workflow: Workflow): { delivered: string[]; notPurchased: string[] } {
+/**
+ * Drives the workflow as far as it can go without human input: quote the
+ * next runnable step, execute it if it cleared the budget gate, repeat.
+ * Stops at the first approval request, failure, or completion.
+ */
+export async function advanceWorkflow(workflow: Workflow): Promise<Workflow> {
+  // Bounded so a bug can't spin: at most one pass per step.
+  for (let i = 0; i < workflow.steps.length; i++) {
+    if (workflow.status !== "running") break;
+
+    const next = workflow.steps.find((s) => s.status === "pending" || s.status === "paying");
+    if (!next) break;
+
+    if (next.status === "pending") {
+      const quote = await quoteStep(workflow, next);
+      if (!quote.ok || quote.requiresApproval) break;
+    }
+
+    const executed = await executeStep(workflow, next);
+    if (!executed.ok) break;
+  }
+
+  return workflow;
+}
+
+export async function cancelWorkflow(
+  workflow: Workflow
+): Promise<{ delivered: string[]; notPurchased: string[] }> {
   const delivered = workflow.steps.filter((s) => s.status === "fulfilled").map((s) => s.id);
   const notPurchased = workflow.steps
     .filter((s) => !["fulfilled", "cancelled"].includes(s.status))
@@ -231,7 +387,8 @@ export function cancelWorkflow(workflow: Workflow): { delivered: string[]; notPu
   }
   workflow.status = "cancelled";
   workflow.updatedAt = nowIso();
+  await store.saveWorkflow(workflow);
 
-  logEvent(workflow.id, "workflow_cancelled", { delivered, notPurchased });
+  await logEvent(workflow.id, "workflow_cancelled", { delivered, notPurchased });
   return { delivered, notPurchased };
 }
