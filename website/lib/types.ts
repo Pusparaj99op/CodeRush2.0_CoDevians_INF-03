@@ -19,6 +19,21 @@ export interface Provider {
   scheme: PaymentScheme;
   priceAlgo: number; // for "exact": fixed price. for "upto": max price.
   verified: boolean;
+  /** Liveness URL, when the provider exposes one separate from `endpoint`. */
+  healthEndpoint?: string;
+  /** True for placeholder providers with no reachable endpoint. Their work
+   *  is stubbed locally rather than bought over the network, and the UI
+   *  labels them as such — see lib/provider-client.ts. */
+  mock?: boolean;
+}
+
+/** Live reachability of a provider, from probing its /health endpoint. */
+export interface ProviderStatus {
+  online: boolean;
+  busy?: boolean;
+  model?: string;
+  reason?: string;
+  checkedAt: string;
 }
 
 export type StepStatus =
@@ -43,6 +58,9 @@ export interface WorkflowStep {
   quotedPriceAlgo: number | null;
   settledPriceAlgo: number | null;
   receiptId: string | null;
+  /** What the provider returned, once the step is paid. Feeds the next
+   *  step's input so the pipeline is a real chain. */
+  output?: string;
 }
 
 export type WorkflowStatus = "planning" | "running" | "cancelled" | "completed" | "failed";
@@ -81,6 +99,9 @@ export interface Receipt {
   scheme: PaymentScheme;
   txnHash: string;
   network: "testnet";
+  /** True when the txn id is synthetic and nothing settled on chain
+   *  (keyless demo mode — see lib/settlement-mode.ts). */
+  simulated: boolean;
   settledAt: string;
 }
 
@@ -92,6 +113,8 @@ export type LedgerEventType =
   | "approval_decided"
   | "payment_verified"
   | "payment_settled"
+  | "provider_called"
+  | "provider_result"
   | "fulfillment_verified"
   | "step_failed"
   | "workflow_cancelled"
