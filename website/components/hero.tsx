@@ -17,25 +17,25 @@ export function Hero() {
     */
     <section className="relative pt-12 pb-24 lg:pt-20 lg:pb-36 overflow-hidden">
 
-      {/* ── Full-bleed CursorGrid — entire hero section background ── */}
-      {/* pointerEvents:none so content (buttons, inputs) stays fully clickable.
-          trackWindow=true makes the grid react to cursor even over stacked content. */}
+      {/* ── Full-bleed CursorGrid — exact React Bits integration ── */}
+      {/* pointer-events: none → content (buttons, inputs) stays clickable.
+          The window mousemove listener inside CursorGrid fires regardless of
+          what element is under the cursor, so the grid still reacts everywhere. */}
       <div className="absolute inset-0 z-0" style={{ pointerEvents: "none" }}>
         <CursorGrid
-          cellSize={72}
+          cellSize={70}
           color="#ff5228"
-          radius={150}
+          radius={140}
           falloff="smooth"
           holdTime={400}
-          fadeDuration={700}
-          lineWidth={1.3}
-          maxOpacity={0.9}
-          fillOpacity={0.14}
-          gridOpacity={0.13}
-          cellRadius={6}
+          fadeDuration={800}
+          lineWidth={1.2}
+          maxOpacity={1}
+          fillOpacity={0}
+          gridOpacity={0}
+          cellRadius={0}
           clickPulse
-          pulseSpeed={550}
-          trackWindow
+          pulseSpeed={600}
         />
       </div>
 

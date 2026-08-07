@@ -136,8 +136,10 @@ function LeafletMapInner({
       const map = L.map(mapContainerRef.current, {
         center: [20, 78], // Default: center of India
         zoom: 4,
-        zoomControl: true,
+        zoomControl: false,
       });
+
+      L.control.zoom({ position: "bottomright" }).addTo(map);
 
       // CartoDB Dark Matter tiles (dark, no API key required)
       L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
@@ -309,9 +311,9 @@ function LeafletMapInner({
   }, [pois]);
 
   return (
-    <div className="relative w-full h-full flex flex-col">
+    <div className="relative w-full h-full flex flex-col z-0">
       {/* Click mode toggle */}
-      <div className="absolute top-3 left-3 z-[1000] flex gap-2 font-poppins text-[11px]">
+      <div className="absolute top-3 left-3 z-[400] flex gap-2 font-poppins text-[11px]">
         <button
           onClick={() => setClickMode("pickup")}
           className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 font-semibold transition-all shadow-md ${
