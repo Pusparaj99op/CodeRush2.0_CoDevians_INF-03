@@ -1,4 +1,4 @@
-# Veldar — Mobile App Spec
+# Veldar — Mobile App Spec.
 
 See `00-overview.md` for architecture context and brand guidelines.
 
