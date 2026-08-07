@@ -14,6 +14,37 @@ npm run dev
 
 Server runs at `http://localhost:3000`.
 
+## Frontend
+
+Landing page (`/`) and web dashboard (`/dashboard`) built with Next.js App
+Router + Tailwind v4 + Motion, using the brand palette in
+`app/globals.css` (`@theme` block: near-black background, orange CTA
+`#FF5228`, indigo accent `#6B5EF5`) and the font stack Poppins (UI/body,
+via `next/font`), Inter (small/meta text), and FlechaM-Medium (display
+headlines — licensed font, not bundled; see the `@font-face` comment in
+`app/globals.css` for how to drop it in once you have the files).
+
+The dashboard is a real client for the orchestrator API above: it submits
+a goal via `POST /api/workflows`, polls `GET /api/workflows/:id/trace`,
+and can approve/deny via `POST /api/workflows/:id/approve`.
+
+### Google Sign-In (Firebase)
+
+Auth reuses the same Firebase project as the Flutter app (project number
+`511913451189`, Android app `1:511913451189:android:22c363e9d044db05ca68fc`),
+but the web SDK needs its **own Web app registration** — the Android app ID
+alone doesn't give you the API key/authDomain the JS SDK needs:
+
+1. Firebase console → that project → Project settings → Add app → Web.
+2. Copy the generated config into `.env.local` as the `NEXT_PUBLIC_FIREBASE_*`
+   values (see `.env.example`).
+3. Enable the Google sign-in provider under Authentication → Sign-in method,
+   if it isn't already on for the Android app.
+
+Until those env vars are set, `lib/firebase.ts` reports `isFirebaseConfigured
+= false` and the UI shows a "Firebase isn't configured yet" state instead of
+crashing.
+
 ## What's implemented
 
 - **Orchestrator** (`lib/orchestrator.ts`): compiles a goal into a step
