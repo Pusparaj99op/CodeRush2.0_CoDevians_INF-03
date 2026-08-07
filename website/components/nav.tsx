@@ -130,16 +130,16 @@ export function Nav() {
     <header className="sticky top-0 z-[100] w-full">
       <GlassSurface
         width="100%"
-        height={64}
+        height={72}
         borderRadius={0}
-        backgroundOpacity={0.16}
-        saturation={1.3}
-        blur={14}
+        backgroundOpacity={0.2}
+        saturation={1.4}
+        blur={16}
         distortionScale={-60}
-        className="glass-surface--nav border-b border-[var(--color-border)] relative z-[100]"
+        className="glass-surface--nav border-b border-white/10 relative z-[100]"
       >
-      <div className="w-full mx-auto flex h-16 max-w-7xl items-center justify-between px-6 lg:px-8">
-        <LogoLink className="mr-6 lg:mr-10" />
+      <div className="w-full mx-auto flex h-18 max-w-7xl items-center justify-between px-8 lg:px-12">
+        <LogoLink className="mr-8 lg:mr-12" />
 
         <nav className="hidden items-center gap-8 lg:flex">
           {LINKS.map((link) => (
