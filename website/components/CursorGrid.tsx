@@ -182,6 +182,7 @@ export default function CursorGrid({
 
       for (let pi = pulses.length - 1; pi >= 0; pi--) {
         const pulse = pulses[pi];
+        if (!pulse) continue;
         const age = (now - pulse.t0) / 1000;
         const ringR = age * p.pulseSpeed;
         if (ringR > Math.hypot(w, h)) {
