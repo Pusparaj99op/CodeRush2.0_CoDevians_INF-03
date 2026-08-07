@@ -44,7 +44,7 @@ export function StickyStack({ cards }: { cards: React.ReactNode[] }) {
   return (
     <div ref={ref} className="relative">
       {cards.map((card, i) => (
-        <div key={i} className="stack-card sticky top-16 min-h-[70dvh] py-6">
+        <div key={i} className="stack-card sticky top-24 py-2">
           {card}
         </div>
       ))}

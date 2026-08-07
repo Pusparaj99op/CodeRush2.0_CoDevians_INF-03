@@ -89,46 +89,45 @@ export default function ProductPage() {
           </div>
         </section>
 
-        <section className="mx-auto max-w-4xl px-6 lg:px-8">
+        <section className="mx-auto max-w-4xl px-6 py-6 lg:px-8">
           <StickyStack
             cards={WORKFLOW_LIFECYCLE.map(({ title, body }, i) => (
               <div
                 key={title}
                 className={
                   i % 2 === 1
-                    ? "flex h-full flex-col justify-between rounded-3xl p-10 shadow-[0_30px_80px_rgb(255_82_40_/_0.2)]"
-                    : "flex h-full flex-col justify-between rounded-3xl border border-[var(--color-border)] bg-[var(--color-bg-elevated)] p-10"
+                    ? "flex flex-col justify-between rounded-2xl p-6 sm:p-7 shadow-[0_20px_50px_rgb(255_82_40_/_0.25)] border border-[#ff5228]/40"
+                    : "flex flex-col justify-between rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg-elevated)] p-6 sm:p-7"
                 }
                 style={
                   i % 2 === 1
-                    ? { background: "linear-gradient(160deg, var(--color-card-from), var(--color-card-to))" }
+                    ? { background: "linear-gradient(160deg, #1c1613, #0f0c0a)" }
                     : undefined
                 }
               >
-                <div
-                  className={
-                    i % 2 === 1
-                      ? "h-1.5 w-10 rounded-full bg-white/50"
-                      : "h-1.5 w-10 rounded-full bg-[var(--color-cta)]"
-                  }
-                />
-                <div className="mt-8">
-                  <h3
+                <div className="flex items-center justify-between">
+                  <span
                     className={
                       i % 2 === 1
-                        ? "text-2xl font-semibold text-white md:text-3xl"
-                        : "text-2xl font-semibold text-[var(--color-headline)] md:text-3xl"
+                        ? "font-mono text-xs font-bold tracking-widest text-[#ff7a59] uppercase"
+                        : "font-mono text-xs font-bold tracking-widest text-[var(--color-cta)] uppercase"
                     }
                   >
+                    Stage 0{i + 1} of 06
+                  </span>
+                  <div
+                    className={
+                      i % 2 === 1
+                        ? "h-1.5 w-8 rounded-full bg-[#ff5228]"
+                        : "h-1.5 w-8 rounded-full bg-white/20"
+                    }
+                  />
+                </div>
+                <div className="mt-4">
+                  <h3 className="text-xl font-semibold text-[var(--color-headline)] md:text-2xl">
                     {title}
                   </h3>
-                  <p
-                    className={
-                      i % 2 === 1
-                        ? "mt-4 max-w-md text-base leading-relaxed text-white/85"
-                        : "mt-4 max-w-md text-base leading-relaxed text-[var(--color-body)]"
-                    }
-                  >
+                  <p className="mt-2 text-sm leading-relaxed text-[var(--color-body)]">
                     {body}
                   </p>
                 </div>
@@ -137,7 +136,7 @@ export default function ProductPage() {
           />
         </section>
 
-        <section className="py-24 lg:py-32">
+        <section className="py-16 lg:py-20">
           <div className="mx-auto max-w-7xl px-6 lg:px-8">
             <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-2">
               <GsapReveal>
