@@ -6,10 +6,10 @@
 // already implemented under app/api/**.
 
 import { CheckCircle, SignIn } from "@phosphor-icons/react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Nav } from "@/components/nav";
 import { useAuth } from "@/lib/auth-context";
-import type { Approval, LedgerEvent, Tier, Workflow } from "@/lib/types";
+import type { LedgerEvent, Tier, Workflow } from "@/lib/types";
 
 export default function Dashboard() {
   const { user, loading, configured, signInWithGoogle } = useAuth();
@@ -189,17 +189,15 @@ function WorkflowPanel() {
     if (traceRes.ok) setTrace(traceBody.trace);
   }
 
-  if (typeof window !== "undefined") {
-    window.addEventListener(
-      "veldar:workflow-created",
-      (e) => {
-        const wf = (e as CustomEvent<Workflow>).detail;
-        setWorkflow(wf);
-        void refresh(wf.id);
-      },
-      { once: false }
-    );
-  }
+  useEffect(() => {
+    function handleCreated(e: Event) {
+      const wf = (e as CustomEvent<Workflow>).detail;
+      setWorkflow(wf);
+      void refresh(wf.id);
+    }
+    window.addEventListener("veldar:workflow-created", handleCreated);
+    return () => window.removeEventListener("veldar:workflow-created", handleCreated);
+  }, []);
 
   const pendingApproval = workflow
     ? trace.find(
