@@ -23,7 +23,7 @@ uniform float uAngle;
 uniform float uPx;
 uniform vec3 uLineColor;
 uniform vec3 uBaseColor;
-float uIntensity;
+uniform float uIntensity;
 uniform float uShineSize;
 uniform float uShineFade;
 uniform float uThickness;
@@ -95,19 +95,19 @@ export interface SpecularButtonProps {
 
 export default function SpecularButton({
   children = "Get Started",
-  size = "md",
-  radius = 9999,
-  tint = "#ff5228",
-  tintOpacity = 0.12,
-  blur = 8,
-  textColor = "#ffffff",
-  lineColor = "#ff7a59",
-  baseColor = "#ff5228",
-  intensity = 1.2,
-  shineSize = 15,
-  shineFade = 45,
-  thickness = 1.5,
-  speed = 0.4,
+  size = "lg",
+  radius = 18,
+  tint = "#ffffff",
+  tintOpacity = 0,
+  blur = 0,
+  textColor = "#f5f5f5",
+  lineColor = "#ffffff",
+  baseColor = "#525252",
+  intensity = 1,
+  shineSize = 10,
+  shineFade = 40,
+  thickness = 1,
+  speed = 0.35,
   followMouse = true,
   proximity = 250,
   autoAnimate = true,
@@ -166,12 +166,12 @@ export default function SpecularButton({
           uRadius: { value: 0 },
           uAngle: { value: 2.4 },
           uPx: { value: dpr },
-          uLineColor: { value: [1, 0.32, 0.16] },
-          uBaseColor: { value: [1, 0.32, 0.16] },
+          uLineColor: { value: [1, 1, 1] },
+          uBaseColor: { value: [0.32, 0.32, 0.32] },
           uIntensity: { value: 1 },
-          uShineSize: { value: 0.25 },
+          uShineSize: { value: 0.17 },
           uShineFade: { value: 0.7 },
-          uThickness: { value: 1.5 },
+          uThickness: { value: 1 },
           uBaseWidth: { value: dpr },
         },
       });

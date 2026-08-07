@@ -10,6 +10,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { GoogleButton } from "./google-button";
+import SpecularButton from "./SpecularButton";
 
 const MIN_PASSWORD_LENGTH = 6;
 
@@ -188,13 +189,20 @@ export function AuthForm({ mode }: { mode: "signin" | "signup" }) {
           </p>
         )}
 
-        <button
+        <SpecularButton
           type="submit"
           disabled={submitting}
-          className="btn-spectacular mt-2 w-full py-3.5 text-sm font-semibold shadow-lg disabled:cursor-not-allowed disabled:opacity-50"
+          size="lg"
+          radius={9999}
+          tint="#ffffff"
+          tintOpacity={0.06}
+          lineColor="#ffffff"
+          baseColor="#525252"
+          autoAnimate={true}
+          className="w-full mt-3"
         >
           {submitting ? "Working…" : isSignUp ? "Create account" : "Sign in"}
-        </button>
+        </SpecularButton>
       </form>
 
       <p className="mt-6 text-center text-sm text-[var(--color-body)]">
