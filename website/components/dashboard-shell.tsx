@@ -5,9 +5,10 @@
 // the full product reachable from the website (goal runner, workflow
 // history, account/tier settings) rather than a single demo page.
 
-import { Gauge, GearSix, ListChecks, SignIn, Warning } from "@phosphor-icons/react";
+import { Gauge, GearSix, ListChecks, Warning } from "@phosphor-icons/react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect } from "react";
 import { Nav } from "@/components/nav";
 import { useAuth } from "@/lib/auth-context";
 
@@ -18,49 +19,25 @@ const TABS = [
 ];
 
 export function DashboardShell({ children }: { children: React.ReactNode }) {
-  const { user, loading, configured, authError, signInWithGoogle, clearAuthError } = useAuth();
+  const { user, loading, authError, clearAuthError } = useAuth();
   const pathname = usePathname();
+  const router = useRouter();
 
-  if (loading) {
+  // Send signed-out visitors to the real sign-in page rather than rendering
+  // an inline gate — /signin offers both Google and email/password, and
+  // `next` brings them back to the page they were actually after.
+  useEffect(() => {
+    if (!loading && !user) {
+      router.replace(`/signin?next=${encodeURIComponent(pathname)}`);
+    }
+  }, [loading, user, pathname, router]);
+
+  if (loading || !user) {
     return (
       <>
         <Nav />
         <main className="mx-auto max-w-7xl px-6 py-24 lg:px-8">
           <div className="h-64 animate-pulse rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg-elevated)]" />
-        </main>
-      </>
-    );
-  }
-
-  if (!user) {
-    return (
-      <>
-        <Nav />
-        <main className="mx-auto flex min-h-[60dvh] max-w-7xl flex-col items-center justify-center px-6 text-center lg:px-8">
-          <h1 className="font-[family-name:var(--font-display)] text-3xl font-medium text-[var(--color-headline)]">
-            Sign in to run a workflow.
-          </h1>
-          <p className="mt-3 max-w-md text-sm text-[var(--color-body)]">
-            {configured
-              ? "Sign in with Google to submit a goal and watch Veldar's agent shop and pay for it."
-              : "Firebase isn't configured yet. Add the NEXT_PUBLIC_FIREBASE_* values in .env.local (see website/README.md)."}
-          </p>
-
-          {authError && (
-            <div className="mt-6 flex items-start gap-2 rounded-xl border border-red-500/30 bg-red-500/5 px-4 py-3 text-left text-sm text-red-300">
-              <Warning size={18} className="mt-0.5 shrink-0" />
-              <span>{authError}</span>
-            </div>
-          )}
-
-          <button
-            onClick={signInWithGoogle}
-            disabled={!configured}
-            className="mt-8 inline-flex items-center gap-2 rounded-full bg-[var(--color-accent)] px-6 py-3.5 text-sm font-semibold text-white transition-all hover:bg-[var(--color-accent-hover)] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            <SignIn size={18} weight="bold" />
-            Sign in with Google
-          </button>
         </main>
       </>
     );
