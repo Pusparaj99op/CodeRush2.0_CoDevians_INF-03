@@ -34,28 +34,28 @@ const PRESET_GOALS = [
   {
     title: "Document Translation & Fact-Check",
     goal: "Translate and fact-check a document",
-    budget: 10,
+    budget: 0.5,
     icon: FileText,
     badge: "Popular",
   },
   {
     title: "Tokyo Trip Booking & Hotel",
     goal: "Book a trip to Tokyo with flights and hotel under budget",
-    budget: 25,
+    budget: 1.0,
     icon: Sparkle,
     badge: "Travel",
   },
   {
     title: "Smart Contract Audit & Coverage",
     goal: "Analyze smart contract vulnerability and purchase coverage",
-    budget: 15,
+    budget: 0.5,
     icon: ShieldCheck,
     badge: "Security",
   },
   {
     title: "Market Data & Sentiment Analysis",
     goal: "Aggregate market data and generate sentiment report",
-    budget: 8,
+    budget: 0.3,
     icon: Lightning,
     badge: "Data",
   },
@@ -85,7 +85,7 @@ export default function Dashboard() {
 
 function WorkflowForm() {
   const [goal, setGoal] = useState("Translate and fact-check a document");
-  const [budget, setBudget] = useState(10);
+  const [budget, setBudget] = useState(0.5);
   const [tier, setTier] = useState<Tier>("free");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);

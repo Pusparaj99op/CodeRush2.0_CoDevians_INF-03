@@ -27,9 +27,9 @@ const COLUMNS = [
   },
 ];
 
-export function Footer() {
+export function Footer({ className = "" }: { className?: string }) {
   return (
-    <footer className="border-t border-[var(--color-border)] py-16">
+    <footer className={`border-t border-[var(--color-border)] py-16 ${className}`}>
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
         <div className="grid grid-cols-2 gap-10 sm:grid-cols-4">
           <div className="col-span-2 sm:col-span-1">

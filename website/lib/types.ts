@@ -4,8 +4,8 @@
 export type Tier = "free" | "pro" | "promax";
 
 export const TIER_CAPS: Record<Tier, { perTxnCapAlgo: number | null; platformCutBps: number }> = {
-  free: { perTxnCapAlgo: 0.5, platformCutBps: 250 }, // 2.5%
-  pro: { perTxnCapAlgo: 5, platformCutBps: 100 }, // 1%
+  free: { perTxnCapAlgo: 0.05, platformCutBps: 250 }, // 2.5%, cap at 0.05 ALGO
+  pro: { perTxnCapAlgo: 0.2, platformCutBps: 100 }, // 1%, cap at 0.2 ALGO
   promax: { perTxnCapAlgo: null, platformCutBps: 0 }, // unlimited, no cut
 };
 

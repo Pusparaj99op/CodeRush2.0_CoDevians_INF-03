@@ -53,7 +53,7 @@ export default function SignInPage() {
             <AuthForm mode="signin" />
           </Suspense>
         </main>
-        <Footer />
+        <Footer className="relative z-20 bg-[#0a0908] shadow-2xl" />
       </div>
     </div>
   );
