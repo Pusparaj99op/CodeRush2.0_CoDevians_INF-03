@@ -1,71 +1,91 @@
 import { ChatCircleText, HandCoins, ShieldCheck } from "@phosphor-icons/react/dist/ssr";
-import { Reveal } from "./reveal";
+import { StickyStack } from "./sticky-stack";
+
+const STEPS = [
+  {
+    icon: ChatCircleText,
+    tone: "elevated",
+    title: "Say what you need",
+    body: "A plain-language goal and a budget. Veldar compiles it into a step graph, with conditions for what can be skipped.",
+  },
+  {
+    icon: HandCoins,
+    tone: "gradient",
+    title: "It shops and pays",
+    body: "Providers quote in ALGO. Veldar pays through the Algorand x402 facilitator as each step clears, never before.",
+  },
+  {
+    icon: ShieldCheck,
+    tone: "elevated",
+    title: "You stay in control",
+    body: "Anything above your cap pauses for approval. Cancel any time and see exactly what was and wasn't purchased.",
+  },
+] as const;
 
 export function HowItWorks() {
   return (
     <section id="how-it-works" className="py-24 lg:py-32">
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
-        <Reveal>
-          <h2 className="max-w-xl font-[family-name:var(--font-display)] text-3xl font-medium leading-tight text-[var(--color-headline)] md:text-4xl">
-            Three steps, one visible trace.
-          </h2>
-        </Reveal>
+        <h2 className="max-w-xl font-[family-name:var(--font-display)] text-3xl font-medium leading-tight text-[var(--color-headline)] md:text-4xl">
+          Three steps, one visible trace.
+        </h2>
+      </div>
 
-        <div className="mt-12 grid grid-cols-1 gap-4 lg:grid-cols-3">
-          <Reveal className="lg:col-span-2">
-            <div className="flex h-full flex-col justify-between rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg-elevated)] p-8">
-              <ChatCircleText size={28} weight="duotone" className="text-[var(--color-cta)]" />
-              <div className="mt-8">
-                <h3 className="text-xl font-semibold text-[var(--color-headline)]">Say what you need</h3>
-                <p className="mt-2 max-w-md text-sm leading-relaxed text-[var(--color-body)]">
-                  A plain-language goal and a budget. Veldar compiles it into a step graph, with
-                  conditions for what can be skipped.
-                </p>
-              </div>
-            </div>
-          </Reveal>
-
-          <Reveal delay={0.1}>
+      <div className="mx-auto mt-12 max-w-4xl px-6 lg:px-8">
+        <StickyStack
+          cards={STEPS.map(({ icon: Icon, tone, title, body }, i) => (
             <div
-              className="flex h-full flex-col justify-between rounded-2xl p-8"
-              style={{ background: "linear-gradient(160deg, var(--color-card-from), var(--color-card-to))" }}
+              key={title}
+              className={
+                tone === "gradient"
+                  ? "flex h-full flex-col justify-between rounded-3xl p-10 shadow-[0_30px_80px_rgb(255_82_40_/_0.2)]"
+                  : "flex h-full flex-col justify-between rounded-3xl border border-[var(--color-border)] bg-[var(--color-bg-elevated)] p-10"
+              }
+              style={
+                tone === "gradient"
+                  ? { background: "linear-gradient(160deg, var(--color-card-from), var(--color-card-to))" }
+                  : undefined
+              }
             >
-              <HandCoins size={28} weight="duotone" className="text-white" />
-              <div className="mt-8">
-                <h3 className="text-xl font-semibold text-white">It shops and pays</h3>
-                <p className="mt-2 text-sm leading-relaxed text-white/85">
-                  Providers quote in ALGO. Veldar pays through the Algorand x402 facilitator as
-                  each step clears.
+              <div className="flex items-center justify-between">
+                <Icon
+                  size={32}
+                  weight="duotone"
+                  className={tone === "gradient" ? "text-white" : "text-[var(--color-cta)]"}
+                />
+                <span
+                  className={
+                    tone === "gradient"
+                      ? "font-mono text-sm text-white/70"
+                      : "font-mono text-sm text-[var(--color-footer-dim)]"
+                  }
+                >
+                  {String(i + 1).padStart(2, "0")} / 03
+                </span>
+              </div>
+              <div className="mt-10">
+                <h3
+                  className={
+                    tone === "gradient"
+                      ? "text-2xl font-semibold text-white md:text-3xl"
+                      : "text-2xl font-semibold text-[var(--color-headline)] md:text-3xl"
+                  }
+                >
+                  {title}
+                </h3>
+                <p
+                  className={
+                    tone === "gradient"
+                      ? "mt-4 max-w-md text-base leading-relaxed text-white/85"
+                      : "mt-4 max-w-md text-base leading-relaxed text-[var(--color-body)]"
+                  }
+                >
+                  {body}
                 </p>
               </div>
             </div>
-          </Reveal>
-
-          <Reveal delay={0.2}>
-            <div className="flex h-full flex-col justify-between rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg-elevated)] p-8">
-              <ShieldCheck size={28} weight="duotone" className="text-[var(--color-accent)]" />
-              <div className="mt-8">
-                <h3 className="text-xl font-semibold text-[var(--color-headline)]">You stay in control</h3>
-                <p className="mt-2 text-sm leading-relaxed text-[var(--color-body)]">
-                  Anything above your cap pauses for approval. Cancel any time and see exactly
-                  what was and wasn&apos;t purchased.
-                </p>
-              </div>
-            </div>
-          </Reveal>
-
-          <Reveal delay={0.3} className="lg:col-span-2">
-            <div className="flex h-full flex-col justify-between rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg-elevated)] p-8 lg:flex-row lg:items-center">
-              <div>
-                <h3 className="text-xl font-semibold text-[var(--color-headline)]">Every run replays</h3>
-                <p className="mt-2 max-w-md text-sm leading-relaxed text-[var(--color-body)]">
-                  Offers, quotes, approvals, payments, and verification results are all written to
-                  a ledger you can open and re-check later.
-                </p>
-              </div>
-            </div>
-          </Reveal>
-        </div>
+          ))}
+        />
       </div>
     </section>
   );
