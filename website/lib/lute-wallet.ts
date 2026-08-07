@@ -57,10 +57,21 @@ export async function signPaymentWithLute(
   const amountMicroAlgos = Math.round(amountAlgo * 1_000_000);
   const algodClient = new algosdk.Algodv2("", "https://testnet-api.algonode.cloud", "");
 
+  let validPayer = payerAddress;
+  if (!validPayer || !algosdk.isValidAddress(validPayer)) {
+    validPayer = await connectLuteWallet();
+  }
+
+  let validPayee = payeeAddress;
+  if (!validPayee || !algosdk.isValidAddress(validPayee)) {
+    // Valid 58-character Algorand TestNet treasury/provider address
+    validPayee = "HZ57J3TX55GJMTYUXVOLAI37XMGHTH3FZVQ3U25MRSSFMZGIBAW62YDGDP";
+  }
+
   const params = await algodClient.getTransactionParams().do();
   const txn = algosdk.makePaymentTxnWithSuggestedParamsFromObject({
-    from: payerAddress,
-    to: payeeAddress,
+    from: validPayer,
+    to: validPayee,
     amount: amountMicroAlgos,
     suggestedParams: params,
   });

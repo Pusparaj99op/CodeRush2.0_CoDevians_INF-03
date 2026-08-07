@@ -194,16 +194,18 @@ function WorkflowPanel() {
       const approvalId = pendingApproval.detail.approvalId as string;
       let luteTxnHash: string | undefined;
 
-      if (decision === "approved" && useLute) {
+      if (decision === "approved") {
         const savedLuteAddr = typeof window !== "undefined" ? localStorage.getItem("veldar:lute_address") : null;
-        const luteAddr = savedLuteAddr ?? (await connectLuteWallet());
-        const amountAlgo = (pendingApproval.detail.amountAlgo as number) ?? 1.0;
-        const result = await signPaymentWithLute(
-          luteAddr,
-          "MOCKPAYEEADDRESS234567890123456789012345678901234567890",
-          amountAlgo
-        );
-        luteTxnHash = result.txnHash;
+        if (useLute || savedLuteAddr) {
+          const luteAddr = savedLuteAddr ?? (await connectLuteWallet());
+          const amountAlgo = (pendingApproval.detail.amountAlgo as number) ?? 1.0;
+          const result = await signPaymentWithLute(
+            luteAddr,
+            "HZ57J3TX55GJMTYUXVOLAI37XMGHTH3FZVQ3U25MRSSFMZGIBAW62YDGDP",
+            amountAlgo
+          );
+          luteTxnHash = result.txnHash;
+        }
       }
 
       await authedFetch(`/api/workflows/${workflow.id}/approve`, {
