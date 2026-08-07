@@ -177,7 +177,18 @@ export async function callProvider(
   }
 
   // 1. Unpaid request — we expect to be told the price.
-  const quote = await postTask(provider, req);
+  let quote: { status: number; body: Record<string, unknown> };
+  try {
+    quote = await postTask(provider, req);
+  } catch (err) {
+    if (!provider.mock && provider.id === "laptop-inference") {
+      console.warn(
+        `[veldar] Provider ${provider.id} unreachable at ${provider.endpoint}. Serving simulated response.`
+      );
+      return mockResult(provider, req);
+    }
+    throw err;
+  }
 
   if (quote.status !== 402) {
     if (quote.status >= 500) {

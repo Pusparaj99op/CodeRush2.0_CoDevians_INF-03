@@ -124,21 +124,42 @@ function WorkflowForm() {
 }
 
 function WorkflowPanel() {
+  const { user } = useAuth();
   const [workflow, setWorkflow] = useState<Workflow | null>(null);
   const [trace, setTrace] = useState<LedgerEvent[]>([]);
   const [approving, setApproving] = useState<string | null>(null);
 
   async function refresh(id: string) {
     const [wfRes, traceRes] = await Promise.all([
-      fetch(`/api/workflows/${id}`),
-      fetch(`/api/workflows/${id}/trace`),
+      authedFetch(`/api/workflows/${id}`),
+      authedFetch(`/api/workflows/${id}/trace`),
     ]);
-    const wfBody = await wfRes.json();
-    const traceBody = await traceRes.json();
-    if (wfRes.ok) setWorkflow(wfBody.workflow);
-    if (traceRes.ok) setTrace(traceBody.trace);
+    if (wfRes.ok) {
+      const wfBody = await wfRes.json();
+      setWorkflow(wfBody.workflow);
+    }
+    if (traceRes.ok) {
+      const traceBody = await traceRes.json();
+      setTrace(traceBody.trace);
+    }
   }
 
+  // Load existing workflows on mount
+  useEffect(() => {
+    if (!user) return;
+    authedFetch("/api/workflows")
+      .then(async (res) => {
+        const body = await res.json();
+        if (res.ok && body.workflows && body.workflows.length > 0) {
+          const latest = body.workflows[0];
+          setWorkflow(latest);
+          void refresh(latest.id);
+        }
+      })
+      .catch(() => {});
+  }, [user]);
+
+  // Listen for newly created workflows
   useEffect(() => {
     function handleCreated(e: Event) {
       const wf = (e as CustomEvent<Workflow>).detail;
@@ -153,13 +174,24 @@ function WorkflowPanel() {
     ? trace.find((e) => e.type === "approval_requested" && e.workflowId === workflow.id)
     : null;
 
+  // Poll for updates while workflow is running or pending approval decision
+  useEffect(() => {
+    if (!workflow) return;
+    if (workflow.status !== "running" && !pendingApproval) return;
+
+    const timer = setInterval(() => {
+      void refresh(workflow.id);
+    }, 1200);
+
+    return () => clearInterval(timer);
+  }, [workflow, pendingApproval]);
+
   async function approve(decision: "approved" | "denied") {
     if (!workflow || !pendingApproval) return;
     setApproving(decision);
     const approvalId = pendingApproval.detail.approvalId as string;
-    await fetch(`/api/workflows/${workflow.id}/approve`, {
+    await authedFetch(`/api/workflows/${workflow.id}/approve`, {
       method: "POST",
-      headers: { "content-type": "application/json" },
       body: JSON.stringify({ approvalId, decision }),
     });
     await refresh(workflow.id);
@@ -183,7 +215,8 @@ function WorkflowPanel() {
         <div>
           <p className="text-sm font-medium text-[var(--color-headline)]">{workflow.goal}</p>
           <p className="mt-1 text-xs text-[var(--color-muted)]">
-            {workflow.spentAlgo} / {workflow.budgetAlgo} ALGO &middot; {workflow.status}
+            {workflow.spentAlgo} / {workflow.budgetAlgo} ALGO &middot;{" "}
+            <span className="font-semibold capitalize text-[var(--color-accent)]">{workflow.status}</span>
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -199,14 +232,14 @@ function WorkflowPanel() {
               <button
                 onClick={() => approve("denied")}
                 disabled={approving !== null}
-                className="rounded-full border border-[var(--color-border)] px-4 py-2 text-xs font-semibold text-[var(--color-headline)] disabled:opacity-50"
+                className="rounded-full border border-[var(--color-border)] px-4 py-2 text-xs font-semibold text-[var(--color-headline)] transition-colors hover:bg-white/10 disabled:opacity-50"
               >
                 Deny
               </button>
               <button
                 onClick={() => approve("approved")}
                 disabled={approving !== null}
-                className="rounded-full bg-[var(--color-cta)] px-4 py-2 text-xs font-semibold text-white disabled:opacity-50"
+                className="rounded-full bg-[var(--color-cta)] px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-[var(--color-cta-hover)] disabled:opacity-50"
               >
                 Approve {(pendingApproval.detail.amountAlgo as number) ?? ""} ALGO
               </button>

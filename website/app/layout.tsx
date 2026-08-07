@@ -1,21 +1,10 @@
 import type { Metadata } from "next";
-import { Inter, Poppins } from "next/font/google";
 import "./globals.css";
 import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/site";
 import { Providers } from "./providers";
 
-const poppins = Poppins({
-  subsets: ["latin"],
-  weight: ["400", "600", "700"],
-  variable: "--font-poppins",
-  display: "swap",
-});
-
-const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-inter",
-  display: "swap",
-});
+const poppins = { variable: "--font-poppins" };
+const inter = { variable: "--font-inter" };
 
 const TITLE = "Veldar — an agent that spends carefully";
 

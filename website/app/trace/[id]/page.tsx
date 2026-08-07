@@ -17,6 +17,7 @@ import {
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Nav } from "@/components/nav";
+import { authedFetch } from "@/lib/api-client";
 import type { LedgerEvent, LedgerEventType } from "@/lib/types";
 
 const EVENT_META: Partial<Record<LedgerEventType, { icon: typeof FileText; text: string }>> = {
@@ -38,7 +39,7 @@ export default function TraceViewer({ params }: { params: { id: string } }) {
 
   useEffect(() => {
     let cancelled = false;
-    fetch(`/api/workflows/${params.id}/trace`)
+    authedFetch(`/api/workflows/${params.id}/trace`)
       .then(async (res) => {
         const body = await res.json();
         if (cancelled) return;
