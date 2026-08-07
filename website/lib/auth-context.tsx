@@ -1,8 +1,8 @@
 "use client";
 
-// Google Sign-In via Firebase Auth, shared across the website. Matches the
-// App's Google OAuth flow (Doc/specs/01-app.md) so a user's session maps
-// to the same Firebase user record regardless of client.
+// Firebase Auth for the website: Google Sign-In plus email/password.
+// The Google flow matches the App's (Doc/specs/01-app.md) so a user's
+// session maps to the same Firebase user record regardless of client.
 //
 // Popup sign-in fails in a few common, non-code situations: the deployed
 // domain isn't in Firebase's Authorized domains list (auth/unauthorized-domain),
@@ -11,15 +11,19 @@
 // fall back to a full-page redirect when the popup itself is the problem.
 
 import {
+  createUserWithEmailAndPassword,
   GoogleAuthProvider,
   getRedirectResult,
   onAuthStateChanged,
+  sendPasswordResetEmail,
+  signInWithEmailAndPassword,
   signInWithPopup,
   signInWithRedirect,
   signOut as firebaseSignOut,
+  updateProfile,
   type User,
 } from "firebase/auth";
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useState } from "react";
 import { getFirebaseAuth, isFirebaseConfigured } from "./firebase";
 
 const POPUP_FALLBACK_CODES = new Set([
@@ -35,7 +39,12 @@ interface AuthContextValue {
   configured: boolean;
   authError: string | null;
   signInWithGoogle: () => Promise<void>;
+  signInWithEmail: (email: string, password: string) => Promise<boolean>;
+  signUpWithEmail: (email: string, password: string, displayName?: string) => Promise<boolean>;
+  sendPasswordReset: (email: string) => Promise<boolean>;
   signOut: () => Promise<void>;
+  /** Firebase ID token for authenticating API calls, or null when signed out. */
+  getIdToken: () => Promise<string | null>;
   clearAuthError: () => void;
 }
 
@@ -49,6 +58,20 @@ function describeAuthError(code: string): string {
       return "Sign-in window was closed before finishing.";
     case "auth/network-request-failed":
       return "Network error while signing in. Check your connection and try again.";
+    case "auth/email-already-in-use":
+      return "An account already exists with that email. Try signing in instead.";
+    case "auth/weak-password":
+      return "Password is too weak — use at least 6 characters.";
+    case "auth/invalid-email":
+      return "That doesn't look like a valid email address.";
+    case "auth/invalid-credential":
+    case "auth/wrong-password":
+    case "auth/user-not-found":
+      return "Email or password is incorrect.";
+    case "auth/too-many-requests":
+      return "Too many attempts. Wait a moment and try again.";
+    case "auth/operation-not-allowed":
+      return "Email/password sign-in isn't enabled for this Firebase project yet. Enable it under Authentication > Sign-in method.";
     default:
       return `Sign-in failed (${code}). Try again.`;
   }
@@ -78,13 +101,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return unsubscribe;
   }, []);
 
-  async function signInWithGoogle() {
+  /** Shared guard: every entry point needs configured Firebase. */
+  function requireAuth() {
     const auth = getFirebaseAuth();
     if (!auth) {
       setAuthError("Firebase isn't configured. Set the NEXT_PUBLIC_FIREBASE_* env vars.");
-      return;
+      return null;
     }
     setAuthError(null);
+    return auth;
+  }
+
+  function reportError(err: unknown): false {
+    const code = (err as { code?: string }).code ?? "auth/unknown-error";
+    setAuthError(describeAuthError(code));
+    return false;
+  }
+
+  async function signInWithGoogle() {
+    const auth = requireAuth();
+    if (!auth) return;
+
     const provider = new GoogleAuthProvider();
     try {
       await signInWithPopup(auth, provider);
@@ -98,11 +135,59 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
+  async function signInWithEmail(email: string, password: string): Promise<boolean> {
+    const auth = requireAuth();
+    if (!auth) return false;
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      return true;
+    } catch (err) {
+      return reportError(err);
+    }
+  }
+
+  async function signUpWithEmail(
+    email: string,
+    password: string,
+    displayName?: string
+  ): Promise<boolean> {
+    const auth = requireAuth();
+    if (!auth) return false;
+    try {
+      const credential = await createUserWithEmailAndPassword(auth, email, password);
+      if (displayName?.trim()) {
+        await updateProfile(credential.user, { displayName: displayName.trim() });
+        // onAuthStateChanged already fired with the pre-update user, so push
+        // the profile change into state ourselves.
+        setUser({ ...credential.user, displayName: displayName.trim() } as User);
+      }
+      return true;
+    } catch (err) {
+      return reportError(err);
+    }
+  }
+
+  async function sendPasswordReset(email: string): Promise<boolean> {
+    const auth = requireAuth();
+    if (!auth) return false;
+    try {
+      await sendPasswordResetEmail(auth, email);
+      return true;
+    } catch (err) {
+      return reportError(err);
+    }
+  }
+
   async function signOut() {
     const auth = getFirebaseAuth();
     if (!auth) return;
     await firebaseSignOut(auth);
   }
+
+  const getIdToken = useCallback(async () => {
+    const auth = getFirebaseAuth();
+    return auth?.currentUser ? auth.currentUser.getIdToken() : null;
+  }, []);
 
   return (
     <AuthContext.Provider
@@ -112,7 +197,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         configured: isFirebaseConfigured,
         authError,
         signInWithGoogle,
+        signInWithEmail,
+        signUpWithEmail,
+        sendPasswordReset,
         signOut,
+        getIdToken,
         clearAuthError: () => setAuthError(null),
       }}
     >
