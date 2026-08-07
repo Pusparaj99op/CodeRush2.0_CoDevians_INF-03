@@ -25,14 +25,6 @@ export function StickyStack({ cards }: { cards: React.ReactNode[] }) {
       const cardEls = gsap.utils.toArray<HTMLElement>(".stack-card");
       cardEls.forEach((card, i) => {
         if (i === cardEls.length - 1) return;
-        ScrollTrigger.create({
-          trigger: card,
-          start: "top top+=64",
-          endTrigger: cardEls[cardEls.length - 1],
-          end: "top top+=64",
-          pin: true,
-          pinSpacing: false,
-        });
         gsap.to(card, {
           scale: 0.94,
           opacity: 0,
@@ -40,7 +32,7 @@ export function StickyStack({ cards }: { cards: React.ReactNode[] }) {
           scrollTrigger: {
             trigger: cardEls[i + 1],
             start: "top bottom",
-            end: "top top+=64",
+            end: "top top+=120",
             scrub: true,
           },
         });

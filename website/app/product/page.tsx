@@ -1,17 +1,17 @@
-import type { Metadata } from "next";
-import { ArrowRight, ChartLineUp, ClockCounterClockwise, LockKey, Wallet } from "@phosphor-icons/react/dist/ssr";
+"use client";
+
+import { ArrowRight, ChartLineUp, ClockCounterClockwise, Lightning, LockKey, Wallet } from "@phosphor-icons/react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { Footer } from "@/components/footer";
 import { GsapReveal } from "@/components/gsap-reveal";
 import { Nav } from "@/components/nav";
+import SpecularButton from "@/components/SpecularButton";
 import { StickyStack } from "@/components/sticky-stack";
 import { TracePreview } from "@/components/trace-preview";
+import { X402InspectorModal } from "@/components/x402-inspector-modal";
 import { WORKFLOW_LIFECYCLE } from "@/lib/content";
-
-export const metadata: Metadata = {
-  title: "Product — Veldar",
-  description: "How Veldar's orchestrator compiles a goal into a budgeted, approvable, replayable workflow.",
-};
 
 const PRINCIPLES = [
   {
@@ -37,19 +37,55 @@ const PRINCIPLES = [
 ];
 
 export default function ProductPage() {
+  const router = useRouter();
+  const [showInspector, setShowInspector] = useState(false);
+
   return (
     <>
       <Nav />
       <main>
         <section className="pt-16 pb-20 lg:pb-28">
           <div className="mx-auto max-w-4xl px-6 text-center lg:px-8">
-            <h1 className="font-[family-name:var(--font-display)] text-4xl font-medium leading-[1.05] tracking-tight text-[var(--color-headline)] md:text-5xl">
+            <h1
+              className="text-4xl font-light leading-[1.05] tracking-tight text-[var(--color-headline)] md:text-5xl lg:text-6xl"
+              style={{ fontFamily: "var(--font-canela)", fontWeight: 300 }}
+            >
               The orchestrator behind every workflow.
             </h1>
             <p className="mx-auto mt-6 max-w-[52ch] text-lg leading-relaxed text-[var(--color-body)]">
               Six stages turn a goal into a budgeted, approvable, and fully replayable sequence of
               Algorand payments. None of them are hidden from you.
             </p>
+
+            <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
+              <SpecularButton
+                onClick={() => router.push("/dashboard")}
+                size="lg"
+                radius={9999}
+                tint="#ff5228"
+                tintOpacity={0.15}
+                lineColor="#ff7a59"
+                baseColor="#ff5228"
+                autoAnimate={true}
+              >
+                <span>Run a workflow</span>
+                <ArrowRight size={16} weight="bold" />
+              </SpecularButton>
+
+              <SpecularButton
+                onClick={() => setShowInspector(true)}
+                size="lg"
+                radius={9999}
+                tint="#ff5228"
+                tintOpacity={0.12}
+                lineColor="#ff7a59"
+                baseColor="#ff5228"
+                autoAnimate={true}
+              >
+                <Lightning size={16} weight="bold" />
+                <span>Inspect x402 Engine (Live Demo)</span>
+              </SpecularButton>
+            </div>
           </div>
         </section>
 
@@ -105,7 +141,10 @@ export default function ProductPage() {
           <div className="mx-auto max-w-7xl px-6 lg:px-8">
             <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-2">
               <GsapReveal>
-                <h2 className="max-w-md font-[family-name:var(--font-display)] text-3xl font-medium leading-tight text-[var(--color-headline)] md:text-4xl">
+                <h2
+                  className="max-w-md text-3xl font-light leading-tight text-[var(--color-headline)] md:text-4xl"
+                  style={{ fontFamily: "var(--font-canela)", fontWeight: 300 }}
+                >
                   See it live, not just described.
                 </h2>
                 <p className="mt-4 max-w-md text-sm leading-relaxed text-[var(--color-body)]">
@@ -113,13 +152,21 @@ export default function ProductPage() {
                   statuses, real provider names, real ALGO amounts, sourced from the orchestrator's
                   own types.
                 </p>
-                <Link
-                  href="/dashboard"
-                  className="mt-8 inline-flex items-center gap-2 rounded-full bg-[var(--color-cta)] px-6 py-3.5 text-sm font-semibold text-white transition-all hover:bg-[var(--color-cta-hover)] active:scale-[0.98]"
-                >
-                  Run a workflow
-                  <ArrowRight size={16} weight="bold" />
-                </Link>
+                <div className="mt-8">
+                  <SpecularButton
+                    onClick={() => router.push("/dashboard")}
+                    size="md"
+                    radius={9999}
+                    tint="#ff5228"
+                    tintOpacity={0.15}
+                    lineColor="#ff7a59"
+                    baseColor="#ff5228"
+                    autoAnimate={true}
+                  >
+                    <span>Run a workflow</span>
+                    <ArrowRight size={16} weight="bold" />
+                  </SpecularButton>
+                </div>
               </GsapReveal>
               <GsapReveal delay={0.1}>
                 <TracePreview />
@@ -130,7 +177,10 @@ export default function ProductPage() {
 
         <section className="py-24 lg:py-32">
           <div className="mx-auto max-w-7xl px-6 lg:px-8">
-            <h2 className="max-w-xl font-[family-name:var(--font-display)] text-3xl font-medium leading-tight text-[var(--color-headline)] md:text-4xl">
+            <h2
+              className="max-w-xl text-3xl font-light leading-tight text-[var(--color-headline)] md:text-4xl"
+              style={{ fontFamily: "var(--font-canela)", fontWeight: 300 }}
+            >
               Four rules the orchestrator never breaks.
             </h2>
             <div className="mt-10 grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -150,6 +200,13 @@ export default function ProductPage() {
         </section>
       </main>
       <Footer />
+
+      <X402InspectorModal
+        isOpen={showInspector}
+        onClose={() => setShowInspector(false)}
+        workflowName="Product Orchestrator Demo"
+        amountAlgo={1.2}
+      />
     </>
   );
 }
