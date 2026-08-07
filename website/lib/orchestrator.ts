@@ -268,8 +268,10 @@ export async function executeStep(
     return { ok: false, reason: (err as Error).message, retryable };
   }
 
-  // Record settlement. The provider already had our facilitator verify the
-  // payment before doing the work; this writes our side of the receipt.
+  // Record settlement. A real provider already had our facilitator verify
+  // the payment before doing the work — in that case the settle route has
+  // already written the receipt and logged it, and we must not double-count
+  // the spend or duplicate the ledger entries.
   const existing = await store.findReceiptByStepAndTxn(step.id, result.payment.txnHash);
   const receipt = settlePayment(
     workflow.id,
