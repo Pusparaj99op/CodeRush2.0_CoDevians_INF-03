@@ -3,7 +3,24 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { compileWorkflow, quoteStep } from "@/lib/orchestrator";
+import { store } from "@/lib/store";
 import type { Tier } from "@/lib/types";
+
+// GET /api/workflows?userId=... — list a user's workflows, newest first.
+// Powers the /dashboard/workflows page (Doc/specs/02-website.md's web
+// dashboard is meant to be a full client, not just a single-run demo).
+export async function GET(req: NextRequest) {
+  const userId = req.nextUrl.searchParams.get("userId");
+  if (!userId) {
+    return NextResponse.json({ error: "userId query param is required" }, { status: 400 });
+  }
+
+  const workflows = [...store.workflows.values()]
+    .filter((w) => w.userId === userId)
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+
+  return NextResponse.json({ workflows });
+}
 
 interface CreateWorkflowBody {
   userId: string;
