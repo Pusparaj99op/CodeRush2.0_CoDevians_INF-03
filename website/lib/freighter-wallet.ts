@@ -50,16 +50,14 @@ export async function connectFreighterWallet(): Promise<string> {
     }
   }
 
-  // Fallback to dynamic @stellar/freighter-api import if window property is lazy loaded
+  // Fallback to window.freighterApi or freighter-api if present
   try {
-    // @ts-ignore
-    const freighterApi = await import("@stellar/freighter-api");
-    if (await freighterApi.isConnected()) {
-      const pubKey = await freighterApi.getPublicKey();
+    if (window.freighterApi && typeof window.freighterApi.getPublicKey === "function") {
+      const pubKey = await window.freighterApi.getPublicKey();
       if (pubKey) return pubKey;
     }
   } catch (e) {
-    // ignore module load error if extension is not installed
+    // ignore lookup error
   }
 
   // Simulated fallback key for hackathon demo if extension is not active
