@@ -122,7 +122,7 @@ const CursorGrid = ({
           const dist = Math.hypot(cx - x, cy - y);
           if (dist > r) continue;
           const level = ease(1 - dist / r) * (p.maxOpacity as number) * (boost ?? 1);
-          if (level > alphas[i]) { alphas[i] = level; touched[i] = now; }
+          if (level > (alphas[i] ?? 0)) { alphas[i] = level; touched[i] = now; }
           else if (level > 0) { touched[i] = now; }
         }
       }
@@ -152,6 +152,7 @@ const CursorGrid = ({
 
       for (let pi = pulses.length - 1; pi >= 0; pi--) {
         const pulse = pulses[pi];
+        if (!pulse) continue;
         const age = (now - pulse.t0) / 1000;
         const ringR = age * (p.pulseSpeed as number);
         if (ringR > Math.hypot(w, h)) { pulses.splice(pi, 1); continue; }
@@ -165,7 +166,7 @@ const CursorGrid = ({
             const i = cRow * cols + cCol;
             const [cx, cy] = cellCenter(i);
             const dist = Math.hypot(cx - pulse.x, cy - pulse.y);
-            if (Math.abs(dist - ringR) < band / 2 && (p.maxOpacity as number) > alphas[i]) {
+            if (Math.abs(dist - ringR) < band / 2 && (p.maxOpacity as number) > (alphas[i] ?? 0)) {
               alphas[i] = p.maxOpacity as number; touched[i] = now;
             }
           }
@@ -177,9 +178,10 @@ const CursorGrid = ({
       const half = (p.cellSize as number) / 2;
 
       for (let i = 0; i < alphas.length; i++) {
-        let a = alphas[i];
+        let a = alphas[i] ?? 0;
         if (a <= 0) continue;
-        if (now - touched[i] > (p.holdTime as number)) {
+        const tTime = touched[i] ?? 0;
+        if (now - tTime > (p.holdTime as number)) {
           a = Math.max(0, a - fadeStep); alphas[i] = a;
           if (a <= 0) continue;
         }

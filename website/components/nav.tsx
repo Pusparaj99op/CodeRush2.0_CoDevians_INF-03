@@ -1,6 +1,6 @@
 "use client";
 
-import { CaretDown, List, SignOut, X } from "@phosphor-icons/react";
+import { CaretDown, Compass, Gear, List, SignOut, X } from "@phosphor-icons/react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -45,8 +45,8 @@ function AccountMenu() {
 
   if (!user) return null;
 
-  const label = user.displayName ?? user.email ?? "Account";
-  const initial = label.charAt(0).toUpperCase();
+  const label = user.displayName || user.email?.split("@")[0] || "Account";
+  const initial = (label[0] || "A").toUpperCase();
 
   async function handleSignOut() {
     setOpen(false);
@@ -55,7 +55,7 @@ function AccountMenu() {
   }
 
   return (
-    <div ref={ref} className="relative z-[100] flex items-center gap-3">
+    <div ref={ref} className="relative z-[99999] flex items-center gap-3 font-poppins">
       <WalletDropdown />
 
       <SpecularButton
@@ -87,38 +87,40 @@ function AccountMenu() {
       {open && (
         <div
           role="menu"
-          className="absolute right-0 top-full z-[9999] mt-3 w-60 overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[#12100e] p-1.5 shadow-2xl backdrop-blur-xl"
+          className="absolute right-0 top-full z-[99999] mt-3 w-64 overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[#12100e] p-2 shadow-2xl backdrop-blur-2xl"
         >
-          <div className="border-b border-[var(--color-border)] px-4 py-3">
-            <p className="truncate text-sm font-semibold text-[var(--color-headline)]">{label}</p>
-            {user.email && user.displayName && (
-              <p className="truncate text-xs text-[var(--color-muted)]">{user.email}</p>
+          <div className="border-b border-[var(--color-border)] px-3.5 py-3">
+            <p className="truncate text-xs font-bold text-[var(--color-headline)]">{label}</p>
+            {user.email && (
+              <p className="truncate font-mono text-[10px] text-[var(--color-muted)] mt-0.5">{user.email}</p>
             )}
           </div>
-          <div className="py-1">
+          <div className="py-1.5 flex flex-col gap-1">
             <Link
               href="/dashboard"
               role="menuitem"
               onClick={() => setOpen(false)}
-              className="block rounded-xl px-3.5 py-2.5 text-sm text-[var(--color-body)] transition-colors hover:bg-white/10 hover:text-[var(--color-headline)]"
+              className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-semibold text-[var(--color-headline)] transition-colors hover:bg-white/10"
             >
-              Dashboard
+              <Compass size={15} className="text-[#ff5228]" />
+              <span>Dashboard</span>
             </Link>
             <Link
               href="/dashboard/settings"
               role="menuitem"
               onClick={() => setOpen(false)}
-              className="block rounded-xl px-3.5 py-2.5 text-sm text-[var(--color-body)] transition-colors hover:bg-white/10 hover:text-[var(--color-headline)]"
+              className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-semibold text-[var(--color-body)] transition-colors hover:bg-white/10 hover:text-[var(--color-headline)]"
             >
-              Settings
+              <Gear size={15} className="text-slate-400" />
+              <span>Settings</span>
             </Link>
             <button
               role="menuitem"
               onClick={handleSignOut}
-              className="flex w-full items-center gap-2.5 rounded-xl px-3.5 py-2.5 text-left text-sm font-medium text-red-400 transition-colors hover:bg-red-500/15 hover:text-red-300"
+              className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-left text-xs font-semibold text-red-400 transition-colors hover:bg-red-500/15 hover:text-red-300"
             >
-              <SignOut size={16} />
-              Sign out
+              <SignOut size={15} />
+              <span>Sign out</span>
             </button>
           </div>
         </div>
@@ -134,7 +136,7 @@ export function Nav() {
   const router = useRouter();
 
   return (
-    <header className="sticky top-4 z-[100] w-[calc(100%-2rem)] max-w-7xl mx-auto px-2 sm:px-4">
+    <header className="sticky top-4 z-[99990] w-[calc(100%-2rem)] max-w-7xl mx-auto px-2 sm:px-4">
       <GlassSurface
         width="100%"
         height={68}
@@ -180,10 +182,19 @@ export function Nav() {
                 size="sm"
                 radius={9999}
                 tint="#ff5228"
-                tintOpacity={0.15}
-                lineColor="#ff7a59"
+                tintOpacity={0.18}
+                blur={0}
+                textColor="#ffffff"
+                lineColor="#ff9e7a"
                 baseColor="#ff5228"
-                autoAnimate={true}
+                intensity={1.2}
+                shineSize={12}
+                shineFade={45}
+                thickness={1.5}
+                speed={0.35}
+                followMouse
+                proximity={250}
+                autoAnimate={false}
               >
                 Sign up
               </SpecularButton>
@@ -248,13 +259,27 @@ export function Nav() {
                 >
                   Sign in
                 </Link>
-                <Link
-                  href="/signup"
-                  onClick={() => setOpen(false)}
-                  className="text-sm font-semibold text-[var(--color-accent)]"
+                <SpecularButton
+                  onClick={() => { setOpen(false); router.push("/signup"); }}
+                  size="sm"
+                  radius={9999}
+                  tint="#ff5228"
+                  tintOpacity={0.18}
+                  blur={0}
+                  textColor="#ffffff"
+                  lineColor="#ff9e7a"
+                  baseColor="#ff5228"
+                  intensity={1.2}
+                  shineSize={12}
+                  shineFade={45}
+                  thickness={1.5}
+                  speed={0.35}
+                  followMouse
+                  proximity={250}
+                  autoAnimate={false}
                 >
                   Sign up
-                </Link>
+                </SpecularButton>
               </>
             )}
           </nav>
