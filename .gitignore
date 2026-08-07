@@ -12,4 +12,4 @@ website/.claude
 laptop-server/node_modules
 laptop-server/dist
 laptop-server/.env
-laptop-sever/.claude
+laptop-server/.claude
