@@ -18,21 +18,24 @@ export function Hero() {
     <section className="relative pt-12 pb-24 lg:pt-20 lg:pb-36 overflow-hidden">
 
       {/* ── Full-bleed CursorGrid — entire hero section background ── */}
-      <div className="absolute inset-0 z-0" style={{ pointerEvents: "auto" }}>
+      {/* pointerEvents:none so content (buttons, inputs) stays fully clickable.
+          trackWindow=true makes the grid react to cursor even over stacked content. */}
+      <div className="absolute inset-0 z-0" style={{ pointerEvents: "none" }}>
         <CursorGrid
-          cellSize={60}
+          cellSize={72}
           color="#ff5228"
-          radius={180}
+          radius={150}
           falloff="smooth"
-          holdTime={500}
-          fadeDuration={900}
-          lineWidth={1.4}
-          maxOpacity={1}
-          fillOpacity={0.18}
-          gridOpacity={0.10}
+          holdTime={400}
+          fadeDuration={700}
+          lineWidth={1.3}
+          maxOpacity={0.9}
+          fillOpacity={0.14}
+          gridOpacity={0.08}
           cellRadius={6}
           clickPulse
-          pulseSpeed={600}
+          pulseSpeed={550}
+          trackWindow
         />
       </div>
 

@@ -32,6 +32,9 @@ export interface CursorGridProps {
   cellRadius?: number;
   clickPulse?: boolean;
   pulseSpeed?: number;
+  /** When true, listen for pointer events on `window` so the grid reacts
+   *  even when the cursor is over z-index-stacked content above the canvas. */
+  trackWindow?: boolean;
   className?: string;
   style?: React.CSSProperties;
 }
@@ -56,6 +59,7 @@ export default function CursorGrid({
   cellRadius = 6,
   clickPulse = true,
   pulseSpeed = 600,
+  trackWindow = false,
   className = "",
   style,
 }: CursorGridProps) {
@@ -88,7 +92,9 @@ export default function CursorGrid({
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    // Cap at 1 — avoids 4× pixel budget on Retina displays for a canvas that
+    // only draws coarse grid lines; the visual difference is negligible.
+    const dpr = 1;
 
     let cols = 0;
     let rows = 0;
@@ -266,14 +272,28 @@ export default function CursorGrid({
       return [e.clientX - rect.left, e.clientY - rect.top];
     };
 
+    const isInsideCanvas = (e: PointerEvent): boolean => {
+      const rect = canvas.getBoundingClientRect();
+      return (
+        e.clientX >= rect.left &&
+        e.clientX <= rect.right &&
+        e.clientY >= rect.top &&
+        e.clientY <= rect.bottom
+      );
+    };
+
     const onPointerMove = (e: PointerEvent) => {
+      // When tracking window-level events, skip if cursor is outside the canvas bounds
+      if (propsRef.current.trackWindow && !isInsideCanvas(e)) return;
       const [x, y] = toLocal(e);
+      if (x < 0 || y < 0 || x > w || y > h) return;
       energize(x, y);
       wake();
     };
 
     const onPointerDown = (e: PointerEvent) => {
       if (!propsRef.current.clickPulse) return;
+      if (propsRef.current.trackWindow && !isInsideCanvas(e)) return;
       const [x, y] = toLocal(e);
       pulses.push({ x, y, t0: performance.now() });
       wake();
@@ -287,16 +307,22 @@ export default function CursorGrid({
     rebuild();
     wake();
 
-    container.addEventListener("pointermove", onPointerMove);
-    container.addEventListener("pointerdown", onPointerDown);
+    // Attach to window when trackWindow=true so events fire even over
+    // z-index content that sits above the canvas.
+    const target = propsRef.current.trackWindow
+      ? (window as unknown as EventTarget)
+      : container;
+
+    target.addEventListener("pointermove", onPointerMove as EventListener);
+    target.addEventListener("pointerdown", onPointerDown as EventListener);
 
     return () => {
       cancelAnimationFrame(raf);
       ro.disconnect();
-      container.removeEventListener("pointermove", onPointerMove);
-      container.removeEventListener("pointerdown", onPointerDown);
+      target.removeEventListener("pointermove", onPointerMove as EventListener);
+      target.removeEventListener("pointerdown", onPointerDown as EventListener);
     };
-  }, [cellSize]);
+  }, [cellSize, trackWindow]);
 
   useEffect(() => {
     wakeRef.current?.();
