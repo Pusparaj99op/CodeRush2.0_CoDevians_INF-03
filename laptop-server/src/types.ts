@@ -26,3 +26,16 @@ export interface InferRequestBody {
   input: string;
   payment?: PaymentPayload;
 }
+
+/** Shape of the facilitator's `POST /api/facilitator/settle` response. */
+export interface SettleResponse {
+  receipt?: {
+    id: string;
+    amountAlgo: number;
+    txnHash: string;
+    scheme: PaymentScheme;
+    settledAt: string;
+  };
+  error?: string;
+  reason?: string;
+}
