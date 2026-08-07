@@ -31,7 +31,7 @@ export function Hero() {
           lineWidth={1.3}
           maxOpacity={0.9}
           fillOpacity={0.14}
-          gridOpacity={0.08}
+          gridOpacity={0.13}
           cellRadius={6}
           clickPulse
           pulseSpeed={550}
