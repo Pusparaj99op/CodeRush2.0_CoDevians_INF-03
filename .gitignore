@@ -13,3 +13,5 @@ laptop-server/node_modules
 laptop-server/dist
 laptop-server/.env
 laptop-server/.claude
+
+/node_modules
