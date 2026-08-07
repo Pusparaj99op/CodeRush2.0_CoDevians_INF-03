@@ -1,4 +1,6 @@
 @import "tailwindcss";
+/* Canela — premium editorial serif by Commercial Type */
+@import url("https://fonts.cdnfonts.com/css/canela");
 
 @font-face {
   font-family: "FlechaM-Medium";
@@ -7,8 +9,10 @@
   font-display: swap;
 }
 
+
 :root {
   --font-display: var(--font-serif), "FlechaM-Medium", Georgia, serif;
+  --font-canela: "Canela", "Canela Text", "Playfair Display", Georgia, serif;
   --font-poppins: var(--font-poppins), "Poppins", sans-serif;
   --font-inter: var(--font-inter), "Inter", sans-serif;
 }
@@ -29,8 +33,13 @@
   --color-border: rgb(245 243 240 / 0.1);
 
   --font-display: var(--font-serif), "FlechaM-Medium", Georgia, serif;
+  --font-canela: "Canela", "Canela Text", "Playfair Display", Georgia, serif;
   --font-ui: var(--font-poppins), "Poppins", sans-serif;
   --font-meta: var(--font-inter), "Inter", sans-serif;
+}
+
+.font-canela {
+  font-family: var(--font-canela);
 }
 
 /* ReactBits Specular Button Styles (Translucent dark glass + glowing orange outline) */

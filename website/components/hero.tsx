@@ -46,8 +46,11 @@ export function Hero() {
       >
         {/* Left Column: Typography & Action Bar */}
         <div className="lg:col-span-7">
-          {/* Headline */}
-          <h1 className="font-display text-5xl font-normal leading-[1.04] tracking-tight text-[var(--color-headline)] sm:text-6xl md:text-7xl lg:text-[5.25rem]">
+          {/* Headline — Canela editorial serif */}
+          <h1
+            className="text-5xl font-light leading-[1.04] tracking-tight text-[var(--color-headline)] sm:text-6xl md:text-7xl lg:text-[5.25rem]"
+            style={{ fontFamily: "var(--font-canela)", fontWeight: 300 }}
+          >
             Your Goals.<br />
             Your Payments.<br />
             <span className="bg-gradient-to-r from-white via-white to-[#c9c5bf] bg-clip-text text-transparent">
