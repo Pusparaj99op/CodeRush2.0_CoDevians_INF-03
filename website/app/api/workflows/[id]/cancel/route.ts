@@ -6,8 +6,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { cancelWorkflow } from "@/lib/orchestrator";
 import { store } from "@/lib/store";
 
-export async function POST(_req: NextRequest, { params }: { params: { id: string } }) {
-  const workflow = store.workflows.get(params.id);
+export async function POST(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+
+  const workflow = await store.getWorkflow(id);
   if (!workflow) {
     return NextResponse.json({ error: "workflow not found" }, { status: 404 });
   }
@@ -15,6 +17,6 @@ export async function POST(_req: NextRequest, { params }: { params: { id: string
     return NextResponse.json({ error: `workflow already ${workflow.status}` }, { status: 409 });
   }
 
-  const closeOut = cancelWorkflow(workflow);
+  const closeOut = await cancelWorkflow(workflow);
   return NextResponse.json({ workflow, closeOut });
 }
