@@ -9,6 +9,7 @@ import { ArrowUpRight, CheckCircle } from "@phosphor-icons/react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { DashboardShell } from "@/components/dashboard-shell";
+import { authedFetch } from "@/lib/api-client";
 import { useAuth } from "@/lib/auth-context";
 import type { LedgerEvent, Tier, Workflow } from "@/lib/types";
 
@@ -25,14 +26,14 @@ export default function Dashboard() {
       </p>
 
       <div className="mt-10 grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,360px)_1fr]">
-        {user && <WorkflowForm userId={user.uid} />}
+        {user && <WorkflowForm />}
         <WorkflowPanel />
       </div>
     </DashboardShell>
   );
 }
 
-function WorkflowForm({ userId }: { userId: string }) {
+function WorkflowForm() {
   const [goal, setGoal] = useState("Translate and fact-check a document");
   const [budget, setBudget] = useState(10);
   const [tier, setTier] = useState<Tier>("free");
@@ -44,10 +45,11 @@ function WorkflowForm({ userId }: { userId: string }) {
     setSubmitting(true);
     setError(null);
     try {
-      const res = await fetch("/api/workflows", {
+      // The caller's identity comes from the Firebase ID token, not a
+      // client-supplied userId (see lib/api-auth.ts).
+      const res = await authedFetch("/api/workflows", {
         method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ userId, goal, budgetAlgo: budget, tier }),
+        body: JSON.stringify({ goal, budgetAlgo: budget, tier }),
       });
       const body = await res.json();
       if (!res.ok) throw new Error(body.error ?? "failed to create workflow");
