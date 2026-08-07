@@ -13,6 +13,7 @@
 // See Doc/specs/03-laptop-server.md for the provider half of this contract.
 
 import { payProvider, PaymentError } from "./payer";
+import { SIMULATED_TXN_PREFIX } from "./settlement-mode";
 import type { PaymentPayload, PaymentTerms } from "./facilitator";
 import type { Provider, ProviderStatus } from "./types";
 
@@ -99,9 +100,12 @@ function mockResult(provider: Provider, req: ProviderCallRequest): ProviderCallR
   return {
     output: `[mock ${provider.capability}] ${req.task}: ${req.input.slice(0, 240)}`,
     payment: {
-      txnHash: "MOCK",
-      payerAddress: "MOCK",
-      payeeAddress: "MOCK",
+      // Prefixed so the receipt and the trace both record this as a
+      // non-settlement. A mock provider's "payment" must never render as a
+      // real one.
+      txnHash: `${SIMULATED_TXN_PREFIX}MOCK-${crypto.randomUUID()}`,
+      payerAddress: `${SIMULATED_TXN_PREFIX}MOCK`,
+      payeeAddress: `${SIMULATED_TXN_PREFIX}MOCK`,
       amountMicroAlgos: Math.round(provider.priceAlgo * 1_000_000),
     },
     terms,
