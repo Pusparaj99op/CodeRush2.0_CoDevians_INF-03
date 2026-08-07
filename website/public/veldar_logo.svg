@@ -3,20 +3,21 @@
 <desc>A minimalist royal red and white logo where the letter V is styled like a currency symbol with two horizontal strike bars, evoking value exchange, above the wordmark VELDAR.</desc>
 
 <!-- Background -->
-<rect width="600" height="600" fill="#0A0908"/>
+<rect width="600" height="600" fill="#FFFFFF"/>
 
 <!-- Currency-style V mark -->
-<g fill="none" stroke="#FF3B5C" stroke-width="32" stroke-linecap="round" stroke-linejoin="miter">
-  <path d="M160 140 L300 420 L440 140"/>
+<g fill="none" stroke="#A6192E" stroke-width="26" stroke-linecap="square" stroke-linejoin="miter">
+  <!-- The V stem -->
+  <path d="M180 130 L300 400 L420 130"/>
 </g>
 
 <!-- Horizontal strike bars, like the two bars in a currency glyph -->
-<g stroke="#FFFFFF" stroke-width="22" stroke-linecap="round">
-  <line x1="140" y1="210" x2="460" y2="210"/>
-  <line x1="165" y1="275" x2="435" y2="275"/>
+<g stroke="#A6192E" stroke-width="18" stroke-linecap="square">
+  <line x1="155" y1="205" x2="445" y2="205"/>
+  <line x1="180" y1="260" x2="420" y2="260"/>
 </g>
 
 <!-- Wordmark -->
-<text x="300" y="520" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="54" letter-spacing="10" fill="#FFFFFF" font-weight="800">VELDAR</text>
+<text x="300" y="500" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="54" letter-spacing="10" fill="#A6192E" font-weight="700">VELDAR</text>
 
 </svg>
