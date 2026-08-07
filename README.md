@@ -1,4 +1,4 @@
-# CodeRush 2.0 | Team Project Repository
+# CodeRush 2.0 | Team Project Repository 
 
 ## Project Information
 
@@ -14,11 +14,12 @@ INF-03 is an AI-powered multi-agent travel and e-commerce orchestrator that auto
 
 List the technologies used in this project:
 
-* Frontend: Next.js, React, Tailwind CSS, Motion, Phosphor Icons
+* Frontend: Next.js, Tailwind CSS, Motion, Phosphor Icons, GSAP, Lenis, Lottie
 * Backend: Node.js, Express, TypeScript, Firebase Admin
 * Database: Firebase / Firestore
 * Tools/APIs: Algorand SDK (`algosdk`), Gemini API, Android SDK (Travel & Shopping Mobile App)
-
+* Payments: x402 with Zerion Payments in USDC via solana
+* 
 ## Setup and Installation
 
 Provide instructions on how to run your project locally:
