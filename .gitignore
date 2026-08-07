@@ -7,3 +7,8 @@ website/next-env.d.ts
 website/.env*.local
 website/.env
 website/.claude
+
+# laptop-server
+laptop-server/node_modules
+laptop-server/dist
+laptop-server/.env
