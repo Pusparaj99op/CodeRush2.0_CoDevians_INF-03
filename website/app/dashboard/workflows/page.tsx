@@ -1,6 +1,6 @@
 "use client";
 
-// Full workflow history for the signed-in user, via GET /api/workflows?userId=.
+// Full workflow history for the signed-in user, via GET /api/workflows.
 // This is the "access the whole app from the website" surface: every run,
 // not just the one active in the Overview tab.
 
@@ -8,6 +8,7 @@ import { ArrowUpRight } from "@phosphor-icons/react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { DashboardShell } from "@/components/dashboard-shell";
+import { authedFetch } from "@/lib/api-client";
 import { useAuth } from "@/lib/auth-context";
 import type { Workflow, WorkflowStatus } from "@/lib/types";
 
@@ -27,7 +28,7 @@ export default function WorkflowsPage() {
   useEffect(() => {
     if (!user) return;
     let cancelled = false;
-    fetch(`/api/workflows?userId=${encodeURIComponent(user.uid)}`)
+    authedFetch("/api/workflows")
       .then(async (res) => {
         const body = await res.json();
         if (cancelled) return;
