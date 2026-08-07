@@ -1,0 +1,22 @@
+<svg width="600" height="600" viewBox="0 0 600 600" xmlns="http://www.w3.org/2000/svg" role="img">
+<title>Veldar logo</title>
+<desc>A minimalist royal red and white logo where the letter V is styled like a currency symbol with two horizontal strike bars, evoking value exchange, above the wordmark VELDAR.</desc>
+
+<!-- Background -->
+<rect width="600" height="600" fill="#0A0908"/>
+
+<!-- Currency-style V mark -->
+<g fill="none" stroke="#FF3B5C" stroke-width="32" stroke-linecap="round" stroke-linejoin="miter">
+  <path d="M160 140 L300 420 L440 140"/>
+</g>
+
+<!-- Horizontal strike bars, like the two bars in a currency glyph -->
+<g stroke="#FFFFFF" stroke-width="22" stroke-linecap="round">
+  <line x1="140" y1="210" x2="460" y2="210"/>
+  <line x1="165" y1="275" x2="435" y2="275"/>
+</g>
+
+<!-- Wordmark -->
+<text x="300" y="520" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="54" letter-spacing="10" fill="#FFFFFF" font-weight="800">VELDAR</text>
+
+</svg>

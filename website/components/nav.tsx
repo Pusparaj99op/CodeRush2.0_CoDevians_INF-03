@@ -7,6 +7,7 @@ import { useEffect, useRef, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 import GlassSurface from "./GlassSurface";
 
+import { LogoLink } from "./logo";
 import { MultiWalletBar } from "./multi-wallet-bar";
 
 const LINKS = [
@@ -138,9 +139,7 @@ export function Nav() {
         className="glass-surface--nav border-b border-[var(--color-border)] relative z-[100]"
       >
       <div className="w-full mx-auto flex h-16 max-w-7xl items-center justify-between px-6 lg:px-8">
-        <Link href="/" className="shrink-0 mr-6 lg:mr-10 font-[family-name:var(--font-display)] text-lg font-semibold tracking-tight text-[var(--color-headline)]">
-          Veldar
-        </Link>
+        <LogoLink className="mr-6 lg:mr-10" />
 
         <nav className="hidden items-center gap-8 lg:flex">
           {LINKS.map((link) => (

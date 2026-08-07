@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { LogoLink } from "./logo";
 
 const COLUMNS = [
   {
@@ -33,9 +34,7 @@ export function Footer({ className = "" }: { className?: string }) {
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
         <div className="grid grid-cols-2 gap-10 sm:grid-cols-4">
           <div className="col-span-2 sm:col-span-1">
-            <p className="font-[family-name:var(--font-display)] text-base font-medium text-[var(--color-headline)]">
-              Veldar
-            </p>
+            <LogoLink size="md" />
             <p className="mt-2 max-w-[24ch] text-sm text-[var(--color-footer-dim)]">
               Built at YCCE Nagpur. Settlement runs on Algorand TestNet.
             </p>
