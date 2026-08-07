@@ -18,14 +18,12 @@ import express, { type Request, type Response } from "express";
 import { GpuBusyError, isBusy, withGpu } from "./gpu-lock";
 import { checkOllama, ollamaConfig, OllamaUnavailableError, runInference } from "./ollama";
 import { priceUsage, unusedAlgo } from "./pricing";
-import type { InferRequestBody, PaymentTerms, SettleResponse } from "./types";
+import { facilitatorBaseUrl, getPaymentTerms, priceCapAlgo } from "./terms";
+import type { InferRequestBody, SettleResponse } from "./types";
 
 type FetchResponse = Awaited<ReturnType<typeof fetch>>;
 
 const PORT = Number(process.env.PORT ?? 8787);
-const PRICE_CAP_ALGO = Number(process.env.PRICE_CAP_ALGO ?? 3.0);
-const PAYEE_ADDRESS = process.env.PAYEE_ADDRESS ?? "FACILITATORPLACEHOLDERADDRESSTESTNETONLY";
-const FACILITATOR_BASE_URL = process.env.FACILITATOR_BASE_URL ?? "http://localhost:3000";
 const FACILITATOR_TIMEOUT_MS = Number(process.env.FACILITATOR_TIMEOUT_MS ?? 15_000);
 
 /** Reject oversized prompts before they reach the GPU. */
@@ -35,20 +33,13 @@ const startedAt = Date.now();
 const app = express();
 app.use(express.json({ limit: "1mb" }));
 
-const paymentTerms: PaymentTerms = {
-  scheme: "upto",
-  amountAlgo: PRICE_CAP_ALGO,
-  payeeAddress: PAYEE_ADDRESS,
-  network: "testnet",
-};
-
 /** One line per request so the demo has a provider-side trace to show. */
 function log(event: string, fields: Record<string, unknown> = {}): void {
   console.log(JSON.stringify({ ts: new Date().toISOString(), event, ...fields }));
 }
 
 app.get("/health", async (_req: Request, res: Response) => {
-  const ollama = await checkOllama();
+  const [ollama, paymentTerms] = await Promise.all([checkOllama(), getPaymentTerms()]);
   const ready = ollama.reachable && ollama.modelReady && !isBusy();
 
   // 503 when we can't serve, so a tunnel/marketplace liveness check sees
@@ -61,14 +52,18 @@ app.get("/health", async (_req: Request, res: Response) => {
     ollama,
     busy: isBusy(),
     terms: paymentTerms,
-    facilitator: FACILITATOR_BASE_URL,
+    facilitator: facilitatorBaseUrl,
     uptimeSeconds: Math.round((Date.now() - startedAt) / 1000),
   });
 });
 
 /** Unauthenticated price quote — lets the marketplace show terms without a 402 round-trip. */
-app.get("/terms", (_req: Request, res: Response) => {
-  res.json({ terms: paymentTerms, maxTokens: ollamaConfig.maxTokens, capability: "local-inference" });
+app.get("/terms", async (_req: Request, res: Response) => {
+  res.json({
+    terms: await getPaymentTerms(),
+    maxTokens: ollamaConfig.maxTokens,
+    capability: "local-inference",
+  });
 });
 
 app.post("/infer", async (req: Request, res: Response) => {
@@ -82,6 +77,10 @@ app.post("/infer", async (req: Request, res: Response) => {
     res.status(413).json({ error: `input exceeds ${MAX_INPUT_CHARS} characters` });
     return;
   }
+
+  // Terms come from the facilitator, so there is one source of truth for
+  // the payee address rather than two env vars that must agree.
+  const paymentTerms = await getPaymentTerms();
 
   // Step 1: no payment yet -> tell the caller what this call costs.
   if (!body.payment) {
@@ -104,7 +103,7 @@ app.post("/infer", async (req: Request, res: Response) => {
   }
 
   const authorizedAlgo = body.payment.amountMicroAlgos / 1_000_000;
-  if (authorizedAlgo > PRICE_CAP_ALGO) {
+  if (authorizedAlgo > priceCapAlgo) {
     res.status(402).json({ error: "authorized amount exceeds upto cap", terms: paymentTerms });
     return;
   }
@@ -114,7 +113,7 @@ app.post("/infer", async (req: Request, res: Response) => {
   // NB: `Response` here would resolve to express's, hence the alias.
   let settleRes: FetchResponse;
   try {
-    settleRes = await fetch(`${FACILITATOR_BASE_URL}/api/facilitator/settle`, {
+    settleRes = await fetch(`${facilitatorBaseUrl}/api/facilitator/settle`, {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
@@ -152,7 +151,7 @@ app.post("/infer", async (req: Request, res: Response) => {
   // one request at a time.
   try {
     const result = await withGpu(() => runInference(body.task!, body.input!));
-    const usage = priceUsage(result.tokensGenerated, result.durationMs, PRICE_CAP_ALGO);
+    const usage = priceUsage(result.tokensGenerated, result.durationMs, priceCapAlgo);
 
     log("inference_complete", {
       stepId: body.stepId,
@@ -206,7 +205,7 @@ app.post("/infer", async (req: Request, res: Response) => {
 const server = app.listen(PORT, async () => {
   console.log(`veldar-laptop-server listening on :${PORT}`);
   console.log(`  model=${ollamaConfig.model} ollama=${ollamaConfig.url}`);
-  console.log(`  facilitator=${FACILITATOR_BASE_URL} priceCapAlgo=${PRICE_CAP_ALGO}`);
+  console.log(`  facilitator=${facilitatorBaseUrl} priceCapAlgo=${priceCapAlgo}`);
 
   const ollama = await checkOllama();
   if (!ollama.reachable) {
@@ -216,6 +215,14 @@ const server = app.listen(PORT, async () => {
   } else {
     console.log(`  ollama ready, models: ${ollama.models.join(", ")}`);
   }
+
+  const terms = await getPaymentTerms();
+  console.log(
+    `  payee=${terms.payeeAddress} (from ${terms.payeeSource})` +
+      (terms.payeeSource === "fallback"
+        ? " — facilitator unreachable, using local PAYEE_ADDRESS"
+        : "")
+  );
 
   console.log(`  expose publicly with a tunnel (ngrok http ${PORT}), then set`);
   console.log(`  LAPTOP_SERVER_URL in the website's .env.local to the tunnel URL.`);
