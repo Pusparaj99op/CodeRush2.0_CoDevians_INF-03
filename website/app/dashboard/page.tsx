@@ -201,7 +201,7 @@ function WorkflowPanel() {
           const amountAlgo = (pendingApproval.detail.amountAlgo as number) ?? 1.0;
           const result = await signPaymentWithLute(
             luteAddr,
-            "HZ57J3TX55GJMTYUXVOLAI37XMGHTH3FZVQ3U25MRSSFMZGIBAW62YDGDP",
+            "4SNSKGZL6TUKMZKJ3BELVCOXTZ653N2OVOKVWBLC26IGBNAAX35ZNW6HB4",
             amountAlgo
           );
           luteTxnHash = result.txnHash;
