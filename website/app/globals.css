@@ -1,0 +1,63 @@
+@import "tailwindcss";
+
+/*
+ * FlechaM-Medium is a licensed display font (see Doc/specs/00-overview.md
+ * brand notes) and its files are not in this repo. Drop the woff2 into
+ * public/fonts/ and uncomment the @font-face below to activate it; until
+ * then --font-display falls back to Poppins, which is close enough in
+ * weight/roundness to ship with.
+ */
+/*
+@font-face {
+  font-family: "FlechaM-Medium";
+  src: url("/fonts/FlechaM-Medium.woff2") format("woff2");
+  font-weight: 500;
+  font-display: swap;
+}
+*/
+
+@theme {
+  --color-bg: #0a0908;
+  --color-bg-elevated: #0d0b09;
+  --color-card-from: #ff4a1f;
+  --color-card-to: #ff6b2e;
+  --color-cta: #ff5228;
+  --color-cta-hover: #ff6b42;
+  --color-accent: #6b5ef5;
+  --color-accent-hover: #7e73f7;
+  --color-headline: #f5f3f0;
+  --color-body: #c9c5bf;
+  --color-muted: #8a8581;
+  --color-footer-dim: #6b6660;
+  --color-border: rgb(245 243 240 / 0.1);
+
+  --font-display: "FlechaM-Medium", var(--font-poppins), sans-serif;
+  --font-ui: var(--font-poppins), sans-serif;
+  --font-meta: var(--font-inter), sans-serif;
+}
+
+html {
+  color-scheme: dark;
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-body);
+  font-family: var(--font-ui);
+}
+
+::selection {
+  background: var(--color-cta);
+  color: var(--color-bg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
