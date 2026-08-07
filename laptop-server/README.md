@@ -20,7 +20,7 @@ side of the x402 flow, on the **`upto` (usage-based) payment scheme**. See
 ```bash
 cd laptop-server
 npm install
-cp .env.example .env   # then edit PAYEE_ADDRESS / FACILITATOR_BASE_URL
+cp .env.example .env   # optional — defaults work against a local website
 npm run dev
 ```
 
@@ -44,9 +44,16 @@ ngrok http 8787
 ```
 
 Then set `LAPTOP_SERVER_URL` in the website's `.env.local` to the tunnel
-URL (that's what `website/lib/providers.ts` reads for the
-`laptop-inference` provider's endpoint), and set this service's
-`PAYEE_ADDRESS` to match the website's `FACILITATOR_PAYEE_ADDRESS`.
+URL — that's what `website/lib/providers.ts` reads for the
+`laptop-inference` provider, deriving both `/infer` and `/health` from it.
+
+The payee address needs no coordination: this service fetches it from the
+website's `GET /api/facilitator/terms` (cached for 60s, so a facilitator
+config change is picked up without a restart mid-demo).
+`PAYEE_ADDRESS` remains only as an offline fallback for running
+without the website up. It used to be a second env var that had to match
+`FACILITATOR_PAYEE_ADDRESS` byte-for-byte, and when it drifted the only
+symptom was a verification failure *after* the caller had already paid.
 
 ## API
 
@@ -65,7 +72,8 @@ the model isn't ready:
 
 ### `GET /terms`
 Unauthenticated price quote, so the marketplace can display terms without
-provoking a 402.
+provoking a 402. `payeeSource` says whether the address came from the
+facilitator or the local fallback.
 
 ### `POST /infer`
 Body: `{ workflowId, stepId, task, input, payment? }`
@@ -148,3 +156,7 @@ during the demo doesn't sever the tunnel mid-response.
 - TestNet only. This service never holds a signing key for user funds — it
   only relays payment payloads to the website's facilitator, which is the
   only component that talks to algod.
+- When the website runs keyless (no `DEMO_PAYER_MNEMONIC`), payments carry
+  a `SIMULATED-` txn id and settle without touching the chain. The
+  facilitator accepts those *only* in that mode, and every receipt is
+  flagged `simulated: true`.
