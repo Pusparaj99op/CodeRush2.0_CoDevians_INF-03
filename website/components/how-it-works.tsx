@@ -33,7 +33,7 @@ export function HowItWorks() {
 
       <div className="mx-auto mt-12 max-w-4xl px-6 lg:px-8">
         <StickyStack
-          cards={STEPS.map(({ icon: Icon, tone, title, body }, i) => (
+          cards={STEPS.map(({ icon: Icon, tone, title, body }) => (
             <div
               key={title}
               className={
@@ -47,22 +47,11 @@ export function HowItWorks() {
                   : undefined
               }
             >
-              <div className="flex items-center justify-between">
-                <Icon
-                  size={32}
-                  weight="duotone"
-                  className={tone === "gradient" ? "text-white" : "text-[var(--color-cta)]"}
-                />
-                <span
-                  className={
-                    tone === "gradient"
-                      ? "font-mono text-sm text-white/70"
-                      : "font-mono text-sm text-[var(--color-footer-dim)]"
-                  }
-                >
-                  {String(i + 1).padStart(2, "0")} / 03
-                </span>
-              </div>
+              <Icon
+                size={32}
+                weight="duotone"
+                className={tone === "gradient" ? "text-white" : "text-[var(--color-cta)]"}
+              />
               <div className="mt-10">
                 <h3
                   className={
