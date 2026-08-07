@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "invalid JSON body" }, { status: 400 });
   }
 
-  const workflow = store.workflows.get(body.workflowId);
+  const workflow = await store.getWorkflow(body.workflowId);
   const step = workflow?.steps.find((s) => s.id === body.stepId);
   if (!workflow || !step) {
     return NextResponse.json({ error: "workflow or step not found" }, { status: 404 });
