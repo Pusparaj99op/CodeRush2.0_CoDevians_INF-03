@@ -1,7 +1,6 @@
 "use client";
 
-import { ArrowRight, ChartLineUp, ClockCounterClockwise, Lightning, LockKey, Wallet } from "@phosphor-icons/react";
-import Link from "next/link";
+import { ArrowRight, Lightning } from "@phosphor-icons/react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Footer } from "@/components/footer";
@@ -13,29 +12,6 @@ import { TracePreview } from "@/components/trace-preview";
 import { X402InspectorModal } from "@/components/x402-inspector-modal";
 import { WORKFLOW_LIFECYCLE } from "@/lib/content";
 
-const PRINCIPLES = [
-  {
-    icon: Wallet,
-    title: "Budget enforced server-side",
-    body: "The tier cap is checked in the orchestrator, not the client. A modified request can't bypass it.",
-  },
-  {
-    icon: LockKey,
-    title: "Approval before spend, not after",
-    body: "A step that exceeds the cap pauses. Nothing settles until you decide, and the workflow can't silently proceed.",
-  },
-  {
-    icon: ChartLineUp,
-    title: "Idempotent settlement",
-    body: "Every payment payload is keyed so a retried request can't double-settle the same step.",
-  },
-  {
-    icon: ClockCounterClockwise,
-    title: "Replayable by design",
-    body: "Offers, quotes, approvals, payments, and verifications are all append-only events, not overwritten state.",
-  },
-];
-
 export default function ProductPage() {
   const router = useRouter();
   const [showInspector, setShowInspector] = useState(false);
@@ -44,7 +20,8 @@ export default function ProductPage() {
     <>
       <Nav />
       <main>
-        <section className="pt-16 pb-20 lg:pb-28">
+        {/* Header Section */}
+        <section className="pt-14 pb-12 lg:pb-16">
           <div className="mx-auto max-w-4xl px-6 text-center lg:px-8">
             <h1
               className="text-4xl font-light leading-[1.05] tracking-tight text-[var(--color-headline)] md:text-5xl lg:text-6xl"
@@ -89,7 +66,8 @@ export default function ProductPage() {
           </div>
         </section>
 
-        <section className="mx-auto max-w-4xl px-6 py-6 lg:px-8">
+        {/* 6-Stage Lifecycle Section */}
+        <section className="mx-auto max-w-4xl px-6 py-4 lg:px-8">
           <StickyStack
             cards={WORKFLOW_LIFECYCLE.map(({ title, body }, i) => (
               <div
@@ -136,7 +114,8 @@ export default function ProductPage() {
           />
         </section>
 
-        <section className="py-16 lg:py-20">
+        {/* Live Trace Preview Section */}
+        <section className="pt-12 pb-20 lg:pt-16 lg:pb-24">
           <div className="mx-auto max-w-7xl px-6 lg:px-8">
             <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-2">
               <GsapReveal>
@@ -170,30 +149,6 @@ export default function ProductPage() {
               <GsapReveal delay={0.1}>
                 <TracePreview />
               </GsapReveal>
-            </div>
-          </div>
-        </section>
-
-        <section className="py-24 lg:py-32">
-          <div className="mx-auto max-w-7xl px-6 lg:px-8">
-            <h2
-              className="max-w-xl text-3xl font-light leading-tight text-[var(--color-headline)] md:text-4xl"
-              style={{ fontFamily: "var(--font-canela)", fontWeight: 300 }}
-            >
-              Four rules the orchestrator never breaks.
-            </h2>
-            <div className="mt-10 grid grid-cols-1 gap-4 md:grid-cols-2">
-              {PRINCIPLES.map(({ icon: Icon, title, body }, i) => (
-                <GsapReveal key={title} delay={i * 0.08}>
-                  <div className="flex h-full items-start gap-4 rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg-elevated)] p-7">
-                    <Icon size={24} weight="duotone" className="mt-1 shrink-0 text-[var(--color-cta)]" />
-                    <div>
-                      <h3 className="text-base font-semibold text-[var(--color-headline)]">{title}</h3>
-                      <p className="mt-1.5 text-sm leading-relaxed text-[var(--color-body)]">{body}</p>
-                    </div>
-                  </div>
-                </GsapReveal>
-              ))}
             </div>
           </div>
         </section>
