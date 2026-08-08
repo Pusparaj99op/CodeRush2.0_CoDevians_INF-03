@@ -16,7 +16,7 @@ const COLUMNS = [
     links: [
       { href: "/about", label: "About" },
       { href: "/docs", label: "Docs" },
-      { href: "/contact", label: "Contact" },
+      { href: "mailto:vikramadityakambani@gmail.com", label: "Contact" },
     ],
   },
   {
