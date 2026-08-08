@@ -38,5 +38,3 @@ Provide instructions on how to run your project locally:
 3. Configure environment variables (provide a `.env.example` if necessary).
 4. Start the development server: `npm run dev`
 
-### 1999be34-a8b6-42ba-b2f1-b86ba0127c93
-![1999be34-a8b6-42ba-b2f1-b86ba0127c93](https://github.com/user-attachments/assets/1999be34-a8b6-42ba-b2f1-b86ba0127c93)
