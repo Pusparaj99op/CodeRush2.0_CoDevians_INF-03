@@ -1,4 +1,12 @@
-# CodeRush 2.0 | Team Project Repository 
+# CodeRush 2.0 | Team Project Repository
+
+<!-- Buttons: quick links -->
+<p align="left">
+  <a href="https://logisticdigi.vercel.app/" style="background:#FFD400;color:#000;padding:9px 16px;border-radius:0px;text-decoration:none;font-weight:700;margin:4px;display:inline-block;font-size:14px">🌐 LogisticDigi Live</a>
+  <a href="https://github.com/Pusparaj99op/LogisticDigi" style="background:#24292e;color:#fff;padding:9px 16px;border-radius:0px;text-decoration:none;font-weight:700;margin:4px;display:inline-block;font-size:14px">🐙 LogisticDigi Repo</a>
+  <a href="https://github.com/Pusparaj99op/CodeRush2.0_CoDevians_INF-03" style="background:#FF5A00;color:#fff;padding:9px 16px;border-radius:0px;text-decoration:none;font-weight:700;margin:4px;display:inline-block;font-size:14px">🏆 CodeRush 2.0 Repo</a>
+</p>
+
 
 ## Project Information
 
@@ -19,7 +27,7 @@ List the technologies used in this project:
 * Database: Firebase / Firestore
 * Tools/APIs: Algorand SDK (`algosdk`), Gemini API, Android SDK (Travel & Shopping Mobile App)
 * Payments: x402 with Zerion Payments in USDC via solana
-* 
+*
 ## Setup and Installation
 
 Provide instructions on how to run your project locally:
