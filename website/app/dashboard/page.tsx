@@ -63,6 +63,7 @@ import { AgentNegotiationPanel } from "@/components/agent-negotiation";
 import { SessionKeyPolicy } from "@/components/session-key-policy";
 import { PackageTracker } from "@/components/package-tracker";
 import { InvoiceSettlement } from "@/components/invoice-settlement";
+import { LedgerEventStream } from "@/components/ledger-event-stream";
 
 const TRAVEL_PRESETS = [
   {
@@ -1226,38 +1227,7 @@ function WorkflowPanel({
       )}
 
       {/* Tab 2: Ledger Events Audit Stream */}
-      {activeTab === "events" && (
-        <ul className="flex flex-col gap-2.5 max-h-[460px] overflow-y-auto pr-1">
-          {trace.map((event) => (
-            <li key={event.id} className="flex items-start gap-3 rounded-xl border border-[var(--color-border)]/50 bg-white/[0.01] p-3 text-xs">
-              <CheckCircle
-                size={16}
-                weight="fill"
-                className={`mt-0.5 shrink-0 ${
-                  event.type === "step_failed"
-                    ? "text-red-400"
-                    : event.type === "payment_settled"
-                    ? "text-emerald-400"
-                    : "text-[var(--color-cta)]"
-                }`}
-              />
-              <div className="flex flex-col min-w-0 flex-1">
-                <div className="flex items-center justify-between gap-2">
-                  <span className="font-semibold text-[var(--color-headline)] capitalize">{event.type.replace(/_/g, " ")}</span>
-                  <span className="text-[10px] font-mono text-[var(--color-muted)]">
-                    {new Date(event.at).toLocaleTimeString()}
-                  </span>
-                </div>
-                {Object.keys(event.detail || {}).length > 0 && (
-                  <pre className="mt-1.5 overflow-x-auto rounded-lg bg-black/40 p-2 font-mono text-[11px] text-[var(--color-body)] leading-relaxed">
-                    {JSON.stringify(event.detail, null, 2)}
-                  </pre>
-                )}
-              </div>
-            </li>
-          ))}
-        </ul>
-      )}
+      {activeTab === "events" && <LedgerEventStream trace={trace} />}
     </div>
 
     {/* Agent Activity Log — shown when workflow is active */}

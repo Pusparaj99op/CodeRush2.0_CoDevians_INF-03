@@ -49,7 +49,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
   return (
     <>
       <Nav />
-      <main className="mx-auto max-w-7xl px-6 py-16 lg:px-8">
+      <main className="mx-auto max-w-7xl px-6 pt-24 pb-16 lg:px-8 lg:pt-28">
         {authError && (
           <div className="mb-8 flex items-start justify-between gap-3 rounded-xl border border-red-500/30 bg-red-500/5 px-4 py-3 text-sm text-red-300">
             <div className="flex items-start gap-2">

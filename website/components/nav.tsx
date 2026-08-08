@@ -144,7 +144,8 @@ export function Nav() {
         backgroundOpacity={0.3}
         saturation={1.4}
         blur={16}
-        distortionScale={-60}
+        distortionScale={0}
+        displace={0}
         className="glass-surface--nav border border-white/15 rounded-full shadow-[0_8px_32px_rgba(0,0,0,0.5),_0_0_15px_rgba(255,255,255,0.05)] relative z-[100]"
       >
       <div className="w-full mx-auto flex h-full items-center justify-between px-6 lg:px-8">
