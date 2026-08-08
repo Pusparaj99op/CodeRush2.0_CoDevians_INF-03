@@ -38,3 +38,30 @@ Provide instructions on how to run your project locally:.
 3. Configure environment variables (provide a `.env.example` if necessary).
 4. Start the development server: `npm run dev`
 
+
+## Team Members
+
+<table align="center">
+  <tr>
+    <td align="center">
+      <img src="./profilephotos/Pranay%20Gajbhiye.png" width="150" alt="Pranay Gajbhiye"/><br />
+      <b>Pranay Gajbhiye</b>
+    </td>
+    <td align="center">
+      <img src="./profilephotos/Rasika%20Pande.jpg" width="150" alt="Rasika Pande"/><br />
+      <b>Rasika Pande</b>
+    </td>
+    <td align="center">
+      <img src="./profilephotos/Soham%20Pise.png" width="150" alt="Soham Pise"/><br />
+      <b>Soham Pise</b>
+    </td>
+    <td align="center">
+      <img src="./profilephotos/Vikramaditya%20Kambani.png" width="150" alt="Vikramaditya Kambani"/><br />
+      <b>Vikramaditya Kambani</b>
+    </td>
+    <td align="center">
+      <img src="./profilephotos/Vineet%20Mandhalkar.png" width="150" alt="Vineet Mandhalkar"/><br />
+      <b>Vineet Mandhalkar</b>
+    </td>
+  </tr>
+</table>
