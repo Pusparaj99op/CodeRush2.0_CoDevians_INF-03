@@ -9,6 +9,12 @@
 </p>
 
 
+## Scan to Open
+
+<p align="left">
+  <img src="https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=https%3A%2F%2Fveldar-gray.vercel.app%2F" alt="QR code linking to https://veldar-gray.vercel.app/" width="400" height="400" />
+</p>
+
 ## Project Information
 
 * Team Name: CoDevians
