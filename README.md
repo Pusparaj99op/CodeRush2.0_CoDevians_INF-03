@@ -11,7 +11,7 @@
 
 ## Project Information
 
-* Team Name: CoDevians
+* Team-Name: CoDevians
 * Project Title: INF-03: Composite Agentic Travel & E-Commerce Orchestrator
 * Track/Theme: INF-03
 
@@ -31,7 +31,7 @@ List the technologies used in this project:
 *
 ## Setup and Installation
 
-Provide instructions on how to run your project locally:
+Provide instructions on how to run your project locally:.
 
 1. Clone the repository.
 2. Install dependencies: `cd website && npm install` or `cd laptop-server && npm install`
