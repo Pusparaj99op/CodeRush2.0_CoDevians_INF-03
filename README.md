@@ -37,3 +37,17 @@ Provide instructions on how to run your project locally:
 2. Install dependencies: `cd website && npm install` or `cd laptop-server && npm install`
 3. Configure environment variables (provide a `.env.example` if necessary).
 4. Start the development server: `npm run dev`
+
+## Profile Photos
+
+### c1450101-456b-4f16-b8f4-1f14ed3ce8e8
+![c1450101-456b-4f16-b8f4-1f14ed3ce8e8](https://github.com/user-attachments/assets/c1450101-456b-4f16-b8f4-1f14ed3ce8e8)
+
+### d572a302-c330-4d3e-ab97-7c3d1e2139a6
+![d572a302-c330-4d3e-ab97-7c3d1e2139a6](https://github.com/user-attachments/assets/d572a302-c330-4d3e-ab97-7c3d1e2139a6)
+
+### 500933a1-66f4-4b09-b6f1-ca924596eed1
+![500933a1-66f4-4b09-b6f1-ca924596eed1](https://github.com/user-attachments/assets/500933a1-66f4-4b09-b6f1-ca924596eed1)
+
+### 1999be34-a8b6-42ba-b2f1-b86ba0127c93
+![1999be34-a8b6-42ba-b2f1-b86ba0127c93](https://github.com/user-attachments/assets/1999be34-a8b6-42ba-b2f1-b86ba0127c93)
