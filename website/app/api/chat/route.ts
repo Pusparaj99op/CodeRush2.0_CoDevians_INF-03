@@ -3,8 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY || "";
 const BASE = "https://generativelanguage.googleapis.com/v1beta/models";
 
-// Models available for this key (confirmed by API probe)
-const MODELS = ["gemini-2.0-flash-lite", "gemini-2.0-flash"];
+const MODELS = ["gemini-3.6-flash", "gemini-3.5-flash", "gemini-2.5-flash", "gemini-2.0-flash"];
 
 const SYSTEM_PROMPT = `You are Veldar AI — a smart, concise financial assistant for the Veldar platform.
 Veldar is an AI-powered agent that automates cross-border B2B payments using blockchain (Stellar, Algorand) and the x402 protocol.
@@ -21,6 +20,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Invalid messages" }, { status: 400 });
     }
 
+    // Fail fast if no API key configured
+    if (!GEMINI_API_KEY) {
+      return NextResponse.json(
+        { error: "Gemini API key not configured." },
+        { status: 503 }
+      );
+    }
+
     const contents = messages
       .filter((m: { role: string; content: string }) => m.content?.trim())
       .map((m: { role: string; content: string }) => ({
@@ -31,25 +38,32 @@ export async function POST(req: NextRequest) {
     const errors: string[] = [];
 
     for (const model of MODELS) {
-      const url = `${BASE}/${model}:generateContent?key=${GEMINI_API_KEY}`;
+      const url = `${BASE}/${model}:generateContent`;
 
-      // Try up to 3 times for 429 (rate limit)
+      // Try up to 3 times — only retry on 429 (rate limit)
       for (let attempt = 0; attempt < 3; attempt++) {
         try {
-          const res = await fetch(url, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              systemInstruction: {
-                parts: [{ text: SYSTEM_PROMPT }],
+          const controller = new AbortController();
+          const timeout = setTimeout(() => controller.abort(), 10_000); // 10s timeout
+
+          let res: Response;
+          try {
+            res = await fetch(url, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "x-goog-api-key": GEMINI_API_KEY,
               },
-              contents,
-              generationConfig: {
-                temperature: 0.7,
-                maxOutputTokens: 1024,
-              },
-            }),
-          });
+              signal: controller.signal,
+              body: JSON.stringify({
+                systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
+                contents,
+                generationConfig: { temperature: 0.7, maxOutputTokens: 1024 },
+              }),
+            });
+          } finally {
+            clearTimeout(timeout);
+          }
 
           const bodyText = await res.text();
 
@@ -60,20 +74,35 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ text });
           }
 
+          // 401 / 403 — try next model (AQ. keys may have per-model restrictions)
+          if (res.status === 401 || res.status === 403) {
+            console.warn(`Auth error on ${model} (${res.status}), trying next model...`);
+            errors.push(`[${model}] ${res.status}: ${bodyText.slice(0, 100)}`);
+            break;
+          }
+
+          // 429 — rate limited, exponential backoff then retry
           if (res.status === 429) {
-            // Rate limited — wait and retry
             const retryAfter = res.headers.get("Retry-After");
-            const waitMs = retryAfter ? parseInt(retryAfter) * 1000 : (attempt + 1) * 2000;
+            const backoffMs = Math.pow(2, attempt) * 1500; // 1.5s, 3s, 6s
+            const waitMs = retryAfter
+              ? Math.min(parseInt(retryAfter) * 1000, 10_000)
+              : backoffMs;
             console.warn(`Rate limited on ${model}, attempt ${attempt + 1}, waiting ${waitMs}ms`);
             await sleep(waitMs);
             continue;
           }
 
-          // Other error — move to next model
-          errors.push(`[${model}] ${res.status}: ${bodyText.slice(0, 300)}`);
+          // Other error — move to next model immediately
+          errors.push(`[${model}] ${res.status}: ${bodyText.slice(0, 200)}`);
           break;
         } catch (fetchErr) {
-          errors.push(`[${model} fetch] ${String(fetchErr)}`);
+          const msg = String(fetchErr);
+          if (msg.includes("abort")) {
+            errors.push(`[${model}] Request timed out after 10s`);
+          } else {
+            errors.push(`[${model} fetch] ${msg}`);
+          }
           break;
         }
       }
@@ -82,7 +111,7 @@ export async function POST(req: NextRequest) {
     console.error("All Gemini models failed:", errors);
     return NextResponse.json(
       {
-        error: "Service temporarily unavailable due to rate limits. Please try again in a few seconds.",
+        error: "Service temporarily unavailable. Please try again in a few seconds.",
         details: errors,
       },
       { status: 503 }
@@ -93,3 +122,4 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
+

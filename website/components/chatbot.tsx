@@ -87,12 +87,30 @@ export function ChatBot() {
     setLoading(true);
     setErrorDetail("");
 
-    try {
+    const callAPI = async () => {
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ messages: newMessages }),
       });
+      return res;
+    };
+
+    try {
+      let res = await callAPI();
+
+      // Auto-retry once on rate limit (503) after a short pause
+      if (res.status === 503) {
+        setMessages([...newMessages, {
+          role: "assistant",
+          content: "⏳ High demand — retrying in 5 seconds…",
+        }]);
+        await new Promise((r) => setTimeout(r, 5000));
+        // Remove the temporary message
+        setMessages(newMessages);
+        res = await callAPI();
+      }
+
       const data = await res.json();
 
       if (data.text) {
@@ -100,10 +118,9 @@ export function ChatBot() {
       } else {
         const detail = data.details ? data.details.join("\n") : data.error;
         setErrorDetail(detail || "Unknown error");
-        // Show user-friendly message based on status
         const userMsg =
           res.status === 503
-            ? "I'm getting a lot of requests right now — please wait a second and try again! 🙏"
+            ? "I'm getting a lot of requests right now — please wait a moment and try again! 🙏"
             : "Sorry, I couldn't connect right now. Please try again in a moment.";
         setMessages([...newMessages, { role: "assistant", content: userMsg }]);
       }
@@ -142,31 +159,82 @@ export function ChatBot() {
 
   return (
     <>
+      {/* ── Keyframe animations ───────────────────────────────────── */}
+      <style>{`
+        @keyframes veldar-float {
+          0%, 100% { transform: translateY(0px); }
+          50% { transform: translateY(-18px); }
+        }
+        @keyframes veldar-ping {
+          0% { transform: scale(1); opacity: 0.6; }
+          100% { transform: scale(1.9); opacity: 0; }
+        }
+        @keyframes veldar-ping-delay {
+          0% { transform: scale(1); opacity: 0.4; }
+          100% { transform: scale(2.4); opacity: 0; }
+        }
+        @keyframes veldar-icon-pulse {
+          0%, 100% { transform: scale(1); filter: drop-shadow(0 0 6px rgba(255,82,40,0.7)); }
+          50% { transform: scale(1.15); filter: drop-shadow(0 0 12px rgba(255,82,40,1)); }
+        }
+      `}</style>
       {/* ── Floating Chat Button ──────────────────────────────────── */}
-      <button
-        id="veldar-chat-toggle"
-        onClick={() => setOpen((o) => !o)}
-        aria-label="Open Veldar AI chat"
-        className="fixed bottom-6 right-6 z-[9999] flex h-14 w-14 items-center justify-center rounded-full transition-all duration-300"
+      <div
+        className="fixed bottom-6 right-6 z-[9999]"
         style={{
-          background: "rgba(10, 9, 8, 0.95)",
-          border: "1.5px solid rgba(255, 82, 40, 0.65)",
-          boxShadow: open
-            ? "0 0 0 4px rgba(255,82,40,0.18), 0 8px 32px rgba(255,82,40,0.4)"
-            : "0 0 0 2px rgba(255,82,40,0.12), 0 4px 20px rgba(255,82,40,0.28)",
-          backdropFilter: "blur(16px)",
+          animation: open ? "none" : "veldar-float 3s ease-in-out infinite",
         }}
       >
-        {open ? (
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="rgba(255,82,40,0.9)">
-            <path d="M18 6L6 18M6 6l12 12" stroke="rgba(255,82,40,0.9)" strokeWidth="2.2" strokeLinecap="round" />
-          </svg>
-        ) : (
-          <span style={{ filter: "drop-shadow(0 0 6px rgba(255,82,40,0.7))" }}>
-            <BotIcon size={24} color="#ff5228" />
-          </span>
+        {/* Pulse rings — only when closed */}
+        {!open && (
+          <>
+            <span
+              className="absolute inset-0 rounded-full"
+              style={{
+                background: "rgba(255,82,40,0.25)",
+                animation: "veldar-ping 2s ease-out infinite",
+              }}
+            />
+            <span
+              className="absolute inset-0 rounded-full"
+              style={{
+                background: "rgba(255,82,40,0.15)",
+                animation: "veldar-ping-delay 2s ease-out infinite 0.6s",
+              }}
+            />
+          </>
         )}
-      </button>
+
+        <button
+          id="veldar-chat-toggle"
+          onClick={() => setOpen((o) => !o)}
+          aria-label="Open Veldar AI chat"
+          className="relative flex h-14 w-14 items-center justify-center rounded-full transition-all duration-300"
+          style={{
+            background: "rgba(10, 9, 8, 0.95)",
+            border: "1.5px solid rgba(255, 82, 40, 0.65)",
+            boxShadow: open
+              ? "0 0 0 4px rgba(255,82,40,0.18), 0 8px 32px rgba(255,82,40,0.4)"
+              : "0 0 0 2px rgba(255,82,40,0.12), 0 4px 24px rgba(255,82,40,0.35)",
+            backdropFilter: "blur(16px)",
+          }}
+        >
+          {open ? (
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="rgba(255,82,40,0.9)">
+              <path d="M18 6L6 18M6 6l12 12" stroke="rgba(255,82,40,0.9)" strokeWidth="2.2" strokeLinecap="round" />
+            </svg>
+          ) : (
+            <span
+              style={{
+                animation: "veldar-icon-pulse 2.5s ease-in-out infinite",
+                display: "flex",
+              }}
+            >
+              <BotIcon size={24} color="#ff5228" />
+            </span>
+          )}
+        </button>
+      </div>
 
       {/* ── Chat Panel ───────────────────────────────────────────── */}
       <div
