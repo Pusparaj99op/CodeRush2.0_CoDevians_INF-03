@@ -297,7 +297,14 @@ export default function Dashboard() {
             }}
           />
         )}
-        {user && activeTab === "ecommerce" && <EcommerceForm />}
+        {user && activeTab === "ecommerce" && (
+          <EcommerceForm
+            onWorkflowSubmit={(goal) => {
+              setLastSubmittedGoal(goal);
+              setWorkflowActive(true);
+            }}
+          />
+        )}
         <WorkflowPanel
           activeDomain={activeTab}
           lastGoal={lastSubmittedGoal}
@@ -541,7 +548,7 @@ function TravelForm({ onWorkflowSubmit }: { onWorkflowSubmit?: (goal: string) =>
   );
 }
 
-function EcommerceForm() {
+function EcommerceForm({ onWorkflowSubmit }: { onWorkflowSubmit?: (goal: string) => void }) {
   const [goal, setGoal] = useState(
     "Procure product from URL (https://apple.com/iphone-15-pro): Apple iPhone 15 Pro Max 256GB from Apple Store"
   );
@@ -584,6 +591,7 @@ function EcommerceForm() {
       }
       window.dispatchEvent(new CustomEvent("veldar:workflow-created", { detail: parsed.data.workflow }));
       setWorkflowSubmitted(true);
+      onWorkflowSubmit?.(goal);
     } catch (err) {
       setError((err as Error).message);
     } finally {
@@ -879,6 +887,31 @@ function EcommerceForm() {
   );
 }
 
+function isEcommerceWorkflow(wf: Workflow): boolean {
+  const goalLower = (wf.goal || "").toLowerCase();
+  if (
+    goalLower.includes("procure") ||
+    goalLower.includes("iphone") ||
+    goalLower.includes("macbook") ||
+    goalLower.includes("sony") ||
+    goalLower.includes("headphone") ||
+    goalLower.includes("anker") ||
+    goalLower.includes("product") ||
+    goalLower.includes("qty:") ||
+    goalLower.includes("url") ||
+    goalLower.includes("buy") ||
+    goalLower.includes("purchase") ||
+    goalLower.includes("gear")
+  ) {
+    return true;
+  }
+  return (
+    wf.steps?.some((s) =>
+      ["laptop-inference", "carrier-oracle", "url-scanner", "procurement", "supplier-compare"].includes(s.providerId)
+    ) ?? false
+  );
+}
+
 function WorkflowPanel({
   activeDomain,
   lastGoal,
@@ -894,6 +927,7 @@ function WorkflowPanel({
 }) {
   const { user } = useAuth();
   const [workflow, setWorkflow] = useState<Workflow | null>(null);
+  const [allWorkflows, setAllWorkflows] = useState<Workflow[]>([]);
   const [trace, setTrace] = useState<LedgerEvent[]>([]);
   const [approving, setApproving] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<"pipeline" | "events">("pipeline");
@@ -913,25 +947,45 @@ function WorkflowPanel({
     }
   }
 
-  // Load existing workflows on mount
+  // Load existing workflows on mount and select domain-matching workflow
   useEffect(() => {
     if (!user) return;
     authedFetch("/api/workflows")
       .then(async (res) => {
         const parsed = await safeJson(res);
-        if (parsed.ok && parsed.data?.workflows && parsed.data.workflows.length > 0) {
-          const latest = parsed.data.workflows[0];
-          setWorkflow(latest);
-          void refresh(latest.id);
+        if (parsed.ok && parsed.data?.workflows) {
+          const list: Workflow[] = parsed.data.workflows;
+          setAllWorkflows(list);
+          const domainMatch = list.find((w) =>
+            activeDomain === "ecommerce" ? isEcommerceWorkflow(w) : !isEcommerceWorkflow(w)
+          );
+          const target = domainMatch ?? list[0];
+          if (target) {
+            setWorkflow(target);
+            void refresh(target.id);
+          }
         }
       })
       .catch(() => {});
-  }, [user]);
+  }, [user, activeDomain]);
+
+  // When switching domain tabs, automatically switch to matching workflow
+  useEffect(() => {
+    if (allWorkflows.length === 0) return;
+    const domainMatch = allWorkflows.find((w) =>
+      activeDomain === "ecommerce" ? isEcommerceWorkflow(w) : !isEcommerceWorkflow(w)
+    );
+    if (domainMatch && domainMatch.id !== workflow?.id) {
+      setWorkflow(domainMatch);
+      void refresh(domainMatch.id);
+    }
+  }, [activeDomain, allWorkflows]);
 
   // Listen for newly created workflows
   useEffect(() => {
     function handleCreated(e: Event) {
       const wf = (e as CustomEvent<Workflow>).detail;
+      setAllWorkflows((prev) => [wf, ...prev]);
       setWorkflow(wf);
       void refresh(wf.id);
     }
@@ -1231,13 +1285,11 @@ function WorkflowPanel({
     </div>
 
     {/* Agent Activity Log — shown when workflow is active */}
-    {activeDomain === "travel" && (
-      <AgentActivityLog
-        domain="travel"
-        goal={lastGoal ?? "Book a trip"}
-        active={!!workflowActive}
-      />
-    )}
+    <AgentActivityLog
+      domain={activeDomain}
+      goal={lastGoal ?? (activeDomain === "ecommerce" ? "Procure product" : "Book a trip")}
+      active={!!workflowActive}
+    />
 
     {/* Flight Disruption + Parametric Insurance */}
     {activeDomain === "travel" && (
