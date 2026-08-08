@@ -265,6 +265,37 @@ h1, h2, h3, .heading-display {
   color: var(--color-bg);
 }
 
+/* Custom Theme Matching Scrollbar */
+::-webkit-scrollbar {
+  width: 9px;
+  height: 9px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0a0908;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 82, 40, 0.35);
+  border-radius: 9999px;
+  border: 2px solid #0a0908;
+  transition: background 0.2s ease-in-out;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 82, 40, 0.7);
+}
+
+::-webkit-scrollbar-thumb:active {
+  background: #ff5228;
+}
+
+/* Firefox scrollbar compatibility */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 82, 40, 0.4) #0a0908;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
