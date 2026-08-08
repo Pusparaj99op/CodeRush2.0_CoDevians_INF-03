@@ -1,7 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:veldar_travel/routing/guards.dart';
 import 'package:veldar_travel/routing/routes.dart';
-
 void main() {
   const unresolved = AuthGate(
     resolved: false,
